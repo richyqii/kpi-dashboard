@@ -45,6 +45,12 @@
       box-shadow: 0 2px 7px rgba(16,43,78,.035);
     }
     .filters { padding: 17px; }
+    .filter-intro {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .filter-intro h2 { margin-bottom: 0; }
     .filter-row {
       display: grid;
       grid-template-columns: 100px 1fr;
@@ -75,7 +81,24 @@
       border-color: var(--blue);
       background: var(--blue);
     }
-    #roleRow { display: none; }
+    #roleRow,
+    #invoiceTypeRow { display: none; }
+    .service-selection {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, .72fr);
+      gap: 12px;
+      align-items: center;
+    }
+    .filter-note {
+      padding: 9px 11px;
+      border: 1px solid #cbd9eb;
+      border-radius: 8px;
+      color: #23466f;
+      background: #edf5ff;
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.4;
+    }
     .dates { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
     .date-control label {
       display: block;
@@ -116,7 +139,36 @@
       gap: 13px;
       margin: 16px 0;
     }
+    .monthly-status-chart {
+      margin: 16px 0;
+      padding: 18px;
+    }
+    .status-month-filter {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .status-metrics {
+      display: grid;
+      grid-template-columns: minmax(135px, .8fr) minmax(320px, 2fr) minmax(135px, .8fr);
+      gap: 13px;
+      margin-top: 14px;
+      align-items: stretch;
+    }
     .card { padding: 17px; }
+    .clickable-card {
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+    .clickable-card:hover,
+    .clickable-card:focus {
+      outline: none;
+      border-color: #91abd0;
+      box-shadow: 0 7px 20px rgba(16,43,78,.08);
+      transform: translateY(-1px);
+    }
     .card .label {
       color: var(--muted);
       font-size: 11px;
@@ -125,52 +177,331 @@
       text-transform: uppercase;
     }
     .card .value { margin-top: 10px; font-size: 28px; font-weight: 850; }
+    .status-donut-card {
+      display: grid;
+      grid-template-columns: 150px minmax(165px, .85fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      padding: 17px;
+    }
+    .status-donut {
+      width: 140px;
+      height: 140px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: conic-gradient(var(--green) 0deg, var(--green) 0deg, var(--red) 0deg 360deg);
+      position: relative;
+      cursor: pointer;
+      transition: box-shadow .18s ease, transform .18s ease;
+    }
+    .status-donut:hover,
+    .status-donut:focus {
+      outline: none;
+      box-shadow: 0 8px 24px rgba(16,43,78,.12);
+      transform: translateY(-1px);
+    }
+    .status-donut.focus-complete {
+      box-shadow: 0 0 0 4px rgba(25,164,119,.18);
+    }
+    .status-donut.focus-delay {
+      box-shadow: 0 0 0 4px rgba(223,90,98,.18);
+    }
+    .status-donut::after {
+      content: "";
+      position: absolute;
+      inset: 20px;
+      border-radius: 50%;
+      background: var(--white);
+    }
+    .status-donut-center {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .status-donut-center strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+    }
+    .status-donut-center span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .status-donut-list {
+      display: grid;
+      gap: 9px;
+    }
+    .completion-calc-box {
+      min-height: 118px;
+      padding: 12px;
+      border: 1px solid #dce5ef;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .completion-calc-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .completion-calc-formula {
+      margin-top: 8px;
+      color: #30445f;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+    .completion-calc-values {
+      margin-top: 10px;
+      color: #5a6c82;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .completion-calc-result {
+      margin-top: 8px;
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 850;
+    }
+    .status-donut-row {
+      display: grid;
+      grid-template-columns: 12px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      color: #34445a;
+      font-size: 13px;
+    }
+    .status-donut-row strong {
+      color: var(--ink);
+      font-size: 18px;
+    }
+    .company-detail-panel {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .company-detail-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: end;
+      justify-content: space-between;
+    }
+    .company-detail-title {
+      color: #30445f;
+      font-size: 13px;
+      font-weight: 750;
+    }
+    .company-box-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+      max-height: 190px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+    .company-box {
+      cursor: pointer;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: #30445f;
+      background: #fff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.25;
+      text-align: left;
+    }
+    .company-box:hover,
+    .company-box:focus {
+      outline: none;
+      border-color: #91abd0;
+      box-shadow: 0 4px 12px rgba(16,43,78,.06);
+    }
+    .company-box.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
     .grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 16px; }
     .panel-head { padding: 18px 18px 0; }
     h2 { margin: 0 0 5px; font-size: 17px; }
     .sub { color: var(--muted); font-size: 12px; }
+    .trend-detail {
+      display: none;
+      padding: 0 18px 18px;
+    }
+    .trend-detail.open { display: block; }
     .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 13px; font-size: 12px; }
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
-    .chart {
-      height: 310px;
-      padding: 18px 18px 54px 52px;
+    .chart-total {
+      display: inline-flex;
+      gap: 8px;
+      align-items: baseline;
+      margin-top: 12px;
+      padding: 8px 11px;
+      border-radius: 8px;
+      color: #087456;
+      background: #d9f4ea;
+      font-weight: 800;
+    }
+    .chart-total.delay {
+      color: #a52d36;
+      background: #fee5e7;
+    }
+    .chart-total.delay span { color: #7f3340; }
+    .chart-total span { color: #315245; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    .chart-total strong { font-size: 18px; }
+    .chart-tools {
       display: flex;
-      gap: 9px;
+      flex-wrap: wrap;
+      gap: 12px;
       align-items: end;
-      position: relative;
-      border-left: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
+      justify-content: space-between;
+      margin-top: 12px;
     }
-    .bar-wrap { height: 100%; flex: 1; display: flex; flex-direction: column; justify-content: end; min-width: 10px; position: relative; }
-    .bar {
-      width: 100%;
-      min-height: 2px;
-      border-radius: 5px 5px 0 0;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column-reverse;
-      background: #eef1f5;
+    .chart-select {
+      min-width: 240px;
     }
-    .bar span { display: block; width: 100%; }
-    .bar-value { color: white; font-size: 10px; font-weight: 850; line-height: 1; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
-    .line-month-label {
-      position: absolute;
-      top: calc(100% + 7px);
+    .chart-select label {
+      display: block;
+      margin-bottom: 4px;
       color: var(--muted);
-      font-size: 9px;
-      font-weight: 700;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .chart-select select {
+      width: 100%;
+      max-width: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 9px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+    }
+    .chart {
+      padding: 16px 0 4px;
+      overflow-x: auto;
+    }
+    .gantt-grid {
+      display: grid;
+      grid-template-columns: 110px repeat(var(--month-count), minmax(72px, 1fr));
+      min-width: calc(110px + (var(--month-count) * 72px));
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .gantt-axis,
+    .gantt-row-label,
+    .gantt-cell {
+      border-right: 1px solid #edf0f4;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .gantt-axis {
+      padding: 9px 8px;
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 10px;
+      font-weight: 800;
       text-align: center;
       white-space: nowrap;
-      transform: translateX(-50%) rotate(-38deg);
-      transform-origin: top center;
     }
-    .y-axis { position: absolute; inset: 18px auto 0 -46px; width: 40px; color: var(--muted); font-size: 10px; }
-    .y-tick { position: absolute; right: 0; transform: translateY(50%); }
-    .axis-title { position: absolute; left: -51px; top: 50%; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .06em; transform: rotate(-90deg) translateY(-50%); }
+    .gantt-row-label {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      color: #30445f;
+      background: #f8fafc;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .gantt-cell {
+      min-height: 44px;
+      padding: 7px;
+      background: #fff;
+    }
+    .gantt-bar {
+      height: 100%;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 850;
+      text-shadow: 0 1px 2px rgba(0,0,0,.25);
+    }
+    .gantt-bar.complete { background: var(--green); }
+    .gantt-bar.delay { background: var(--red); }
+    .gantt-bar.na {
+      border: 2px dashed #95a1b2;
+      color: #526173;
+      background: #f2f5f8;
+      text-shadow: none;
+    }
+    .gantt-bar.empty {
+      background: #eef1f5;
+      color: var(--muted);
+      text-shadow: none;
+    }
+    .gantt-bar.dimmed {
+      opacity: .22;
+      filter: grayscale(.45);
+    }
     .status-list { padding: 17px 18px 20px; }
     .status-row { display: grid; grid-template-columns: 12px 1fr auto; gap: 9px; align-items: center; padding: 10px 0; border-bottom: 1px solid #edf0f4; }
     .status-row:last-child { border-bottom: 0; }
     .status-row strong { font-size: 18px; }
+    .delay-summary { display: none; }
+    .delay-company-list {
+      max-height: 285px;
+      overflow: auto;
+      padding: 16px 18px 18px;
+    }
+    .delay-company-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .delay-company-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 7px;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .delay-company-head span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .delay-company-count {
+      color: #a52d36;
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .delay-range {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
     .table-panel { margin-top: 16px; overflow: hidden; }
     table { border-collapse: collapse; width: 100%; font-size: 13px; }
     th, td { padding: 11px 14px; border-bottom: 1px solid #edf0f4; text-align: left; }
@@ -187,8 +518,16 @@
     @media (max-width: 900px) {
       header { align-items: flex-start; flex-direction: column; }
       .filter-row { grid-template-columns: 1fr; gap: 7px; }
-      .cards { grid-template-columns: repeat(2, 1fr); }
+      .service-selection { grid-template-columns: 1fr; }
+      .cards, .status-metrics { grid-template-columns: repeat(2, 1fr); }
+      .status-donut-card { grid-column: 1 / -1; grid-template-columns: 130px minmax(160px, 1fr) minmax(0, 1fr); }
+      .status-donut { width: 120px; height: 120px; }
       .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .cards, .status-metrics { grid-template-columns: 1fr; }
+      .status-donut-card { grid-template-columns: 1fr; }
+      .status-donut { margin: 0 auto; }
     }
   </style>
 </head>
@@ -202,19 +541,34 @@
 
   <main>
     <section class="panel filters">
-      <div class="filter-row">
-        <div class="filter-label">Service</div>
-        <div class="tabs" id="serviceTabs"></div>
+      <div class="filter-intro">
+        <h2>KPI Checklist</h2>
       </div>
       <div class="filter-row">
         <div class="filter-label">PIC</div>
         <div class="tabs" id="picTabs"></div>
       </div>
+      <div class="filter-row">
+        <div class="filter-label">Service</div>
+        <div class="service-selection">
+          <div class="tabs" id="serviceTabs"></div>
+          <div class="filter-note">* Only Accounting section shows Main Reviewer and Sub Reviewer role options.</div>
+        </div>
+      </div>
+      <div class="filter-row" id="invoiceTypeRow">
+        <div class="filter-label">E-Invoice Type</div>
+        <div class="tabs" id="invoiceTypeTabs"></div>
+      </div>
       <div class="filter-row" id="roleRow">
         <div class="filter-label">Role</div>
         <div class="tabs" id="roleTabs"></div>
       </div>
-      <div class="filter-row">
+    </section>
+
+    <section class="panel monthly-status-chart">
+      <h2>Overall Status Chart</h2>
+      <div class="sub">Current filtered selection summary</div>
+      <div class="status-month-filter">
         <div class="filter-label">Month</div>
         <div class="dates">
           <div class="date-control">
@@ -222,29 +576,38 @@
             <input class="date-input" id="fromDate" type="month">
           </div>
           <div class="date-control">
-            <label for="toDate">Selected cutoff month</label>
+            <label for="toDate">To</label>
             <input class="date-input" id="toDate" type="month">
           </div>
           <div class="date-summary" id="dateSummary"></div>
         </div>
       </div>
-      <div class="rules">
-        <strong>Dashboard logic:</strong> tick (✔) and "Closing" count as <strong>Completed</strong>.
-        SST blank cells with the approval-colored fill count as <strong>Wait for Approval</strong>.
-        SST dark-filled cells count as <strong>Not Applicable</strong> and are excluded from performance.
-        Other blank and hyphen-only (-) values count as <strong>Delay</strong>. Total tasks use inclusive between logic
-        from the selected start month through one month before the selected cutoff month. For example, selecting
-        Jun 2026 counts tasks through May 2026.
+      <div class="status-metrics">
+        <div class="card clickable-card" id="companyKpiCard" role="button" tabindex="0" title="Go to company selection">
+          <div class="label">Companies</div>
+          <div class="value" id="companyKpi">0</div>
+        </div>
+        <div class="card status-donut-card">
+          <div class="status-donut" id="statusDonut" role="button" tabindex="0" title="Click doughnut segment to select Complete or Delay">
+            <div class="status-donut-center">
+              <strong id="donutRate">0%</strong>
+              <span>Complete</span>
+            </div>
+          </div>
+          <div class="completion-calc-box">
+            <div class="completion-calc-label">Complete Rate Calculation</div>
+            <div class="completion-calc-formula">Completed / (Completed + Delay + Wait for Approval)</div>
+            <div class="completion-calc-values" id="completionCalcValues">0 / (0 + 0 + 0)</div>
+            <div class="completion-calc-result" id="completionCalcResult">= 0.0%</div>
+          </div>
+          <div class="status-donut-list">
+            <div class="status-donut-row"><i class="dot" style="background:var(--blue)"></i><span>Total Assigned Tasks</span><strong id="donutAssignedLegend">0</strong></div>
+            <div class="status-donut-row"><i class="dot" style="background:var(--green)"></i><span>Completed Tasks</span><strong id="donutCompleteLegend">0</strong></div>
+            <div class="status-donut-row"><i class="dot" style="background:var(--red)"></i><span>Delay Tasks</span><strong id="donutDelayLegend">0</strong></div>
+          </div>
+        </div>
+        <div class="card" id="approvalCard"><div class="label">Wait for Approval</div><div class="value" id="approvalKpi">0</div></div>
       </div>
-    </section>
-
-    <section class="cards">
-      <div class="card"><div class="label">Companies</div><div class="value" id="companyKpi">0</div></div>
-      <div class="card"><div class="label">Completed Tasks</div><div class="value" id="completeKpi">0</div></div>
-      <div class="card"><div class="label">Delay Tasks</div><div class="value" id="delayKpi">0</div></div>
-      <div class="card" id="approvalCard"><div class="label">Wait for Approval</div><div class="value" id="approvalKpi">0</div></div>
-      <div class="card" id="naCard"><div class="label">Not Applicable</div><div class="value" id="naKpi">0</div></div>
-      <div class="card"><div class="label">Completion Rate</div><div class="value" id="rateKpi">0%</div></div>
     </section>
 
     <section class="grid">
@@ -252,45 +615,84 @@
         <div class="panel-head">
           <h2>Monthly Status Trend</h2>
           <div class="sub">Completed-task quantity by selected month.</div>
+        </div>
+        <div class="trend-detail" id="trendDetail">
           <div class="legend">
             <span><i class="dot" style="background:var(--green)"></i>Completed</span>
+            <span><i class="dot" style="background:var(--red)"></i>Delay</span>
+            <span><i class="dot" style="background:var(--gray)"></i>Not Applicable</span>
           </div>
+          <div class="chart-tools">
+            <div class="chart-total"><span>Total completed tasks</span><strong id="chartCompletedTotal">0</strong></div>
+            <div class="chart-total delay"><span>Total delay task</span><strong id="chartDelayTotal">0</strong></div>
+          </div>
+          <div class="company-detail-panel" id="companyDetailPanel">
+            <div class="company-detail-tools">
+              <div>
+                <div class="filter-label">Company</div>
+                <div class="company-detail-title" id="companyDetailTitle"></div>
+              </div>
+            </div>
+            <div class="company-box-list" id="companyBoxList"></div>
+          </div>
+          <div class="chart" id="chart"></div>
         </div>
-        <div class="chart" id="chart"></div>
       </div>
       <div class="panel">
         <div class="panel-head">
-          <h2>Selection Totals</h2>
-          <div class="sub">Current filtered selection</div>
+          <h2>Delay Breakdown Summary</h2>
+          <div class="sub">Unfinished tasks by company in the current selection</div>
         </div>
-        <div class="status-list" id="statusList"></div>
+        <div class="delay-summary" id="delaySummary"></div>
+        <div class="delay-company-list" id="delayCompanyList"></div>
       </div>
     </section>
 
     <section class="panel table-panel">
       <div class="panel-head" style="padding-bottom:14px">
-        <h2>Monthly Completion Detail</h2>
-        <div class="sub">Shows which months are completed and which months still have delays.</div>
+        <h2>Wait for Approval</h2>
+        <div class="sub">Companies with work waiting for approval in the current selection.</div>
       </div>
       <table>
-        <thead><tr><th>Month</th><th>Completed (✔ / Closing)</th><th class="approval-only">Wait for Approval</th><th class="na-only">Not Applicable</th><th>Blank</th><th>Hyphen (-)</th><th>Delay Total</th><th>Flag</th></tr></thead>
-        <tbody id="monthTable"></tbody>
+        <thead><tr><th>Company</th><th>Duration</th></tr></thead>
+        <tbody id="waitApprovalTable"></tbody>
+      </table>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="panel-head" style="padding-bottom:14px">
+        <h2>Not Applicable</h2>
+        <div class="sub">Companies marked not applicable in the current selection.</div>
+      </div>
+      <table>
+        <thead><tr><th>Company</th><th>Duration</th></tr></thead>
+        <tbody id="notApplicableTable"></tbody>
       </table>
     </section>
   </main>
 
   <script src="dashboard-data.js"></script>
+  <script src="dashboard-company-data.js"></script>
   <script>
-    const services = ["All Services", "Accounting", "Payroll", "E-Invoice", "SST"];
+    const services = ["Accounting", "Payroll", "E-Invoice", "SST"];
     const pics = ["Yoong Shi", "Jia Wen", "Ling Yin", "Iza"];
     const roles = ["Main Reviewer", "Sub Reviewer"];
-    const state = { service: "All Services", pic: "Yoong Shi", role: "Main Reviewer" };
+    const eInvoiceTypes = ["Billed", "Self-bill"];
+    const state = { service: "Accounting", pic: "Yoong Shi", role: "Main Reviewer", invoiceType: "Billed", company: "All Companies", detailCompany: "All Companies", trendOpen: false, trendFocus: null };
     const colors = { Completed: "#19a477", Delay: "#df5a62", "Wait for Approval": "#eea52c", "Not Applicable": "#95a1b2" };
 
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    }
     function monthLabel(value) {
       if (!value) return "-";
       const [year, month] = value.split("-");
       return new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric" }).format(new Date(Number(year), Number(month) - 1, 1));
+    }
+    function chartMonthLabel(value) {
+      const [year, month] = value.split("-");
+      const shortMonth = new Intl.DateTimeFormat("en-GB", { month: "short" }).format(new Date(Number(year), Number(month) - 1, 1));
+      return `${shortMonth}${year.slice(2)}`;
     }
     function monthsBetween(start, end) {
       const result = [];
@@ -304,10 +706,6 @@
       }
       return result;
     }
-    function chartMonthLabel(value) {
-      const [year, month] = value.split("-");
-      return `${new Intl.DateTimeFormat("en-GB", { month: "short" }).format(new Date(Number(year), Number(month) - 1, 1)).toUpperCase()} ${year.slice(2)}`;
-    }
     function previousMonth(value) {
       const [year, month] = value.split("-").map(Number);
       const date = new Date(year, month - 2, 1);
@@ -319,6 +717,15 @@
       root.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
         state[key] = btn.dataset.value;
         if (key === "service" && state.service !== "Accounting") state.role = "Main Reviewer";
+        if (key === "service" && state.service !== "E-Invoice") state.invoiceType = "Billed";
+        if (key === "service") {
+          state.detailCompany = "All Companies";
+          state.company = "All Companies";
+        }
+        if (key === "invoiceType") {
+          state.detailCompany = "All Companies";
+          state.company = "All Companies";
+        }
         render();
       }));
     }
@@ -330,13 +737,41 @@
         role === "Sub";
       const effectiveRole = samePersonReviewer ? "Main" : role;
       return dashboardData.filter(row =>
-        (state.service === "All Services" || row.service === state.service) &&
+        row.service === state.service &&
         (state.pic === "All PIC" || row.pic === state.pic.toUpperCase()) &&
-        (!effectiveRole || row.role === effectiveRole)
+        (!effectiveRole || row.role === effectiveRole) &&
+        (state.service !== "E-Invoice" || row.invoiceType === state.invoiceType)
       );
+    }
+    function filteredCompanyRows() {
+      const role = state.role === "Main Reviewer" ? "Main" : state.role === "Sub Reviewer" ? "Sub" : null;
+      if (state.service === "Accounting" && ["Jia Wen", "Ling Yin"].includes(state.pic) && role === "Sub") return [];
+      const samePersonReviewer = state.service === "Accounting" &&
+        state.pic === "Yoong Shi" &&
+        role === "Sub";
+      const effectiveRole = samePersonReviewer ? "Main" : role;
+      return dashboardCompanyData.filter(row =>
+        row.service === state.service &&
+        (state.pic === "All PIC" || row.pic === state.pic.toUpperCase()) &&
+        (!effectiveRole || row.role === effectiveRole) &&
+        (state.service !== "E-Invoice" || row.invoiceType === state.invoiceType)
+      );
+    }
+    function buildCompanyBoxes(rows) {
+      const root = document.getElementById("companyBoxList");
+      const companies = [...new Set(rows.map(row => row.company))].sort((a, b) => a.localeCompare(b));
+      if (state.detailCompany !== "All Companies" && !companies.includes(state.detailCompany)) state.detailCompany = "All Companies";
+      state.company = state.detailCompany;
+      document.getElementById("companyDetailTitle").textContent = state.detailCompany;
+      root.innerHTML = ["All Companies", ...companies].map(company =>
+        `<button type="button" class="company-box ${state.detailCompany === company ? "active" : ""}" data-company="${escapeHtml(company)}">${escapeHtml(company)}</button>`
+      ).join("");
     }
     function showApproval() {
       return state.service === "SST" && ["Yoong Shi", "Ling Yin", "Iza"].includes(state.pic);
+    }
+    function showApprovalMetric() {
+      return state.service === "SST" && ["Yoong Shi", "Ling Yin"].includes(state.pic);
     }
     function showNotApplicable() {
       return state.service === "SST" && state.pic === "Iza";
@@ -368,14 +803,58 @@
       });
       return Object.values(groups).reduce((sum, count) => sum + count, 0);
     }
+    function renderDelayBreakdown(rows, months) {
+      const selectedMonths = new Set(months);
+      const companies = {};
+      rows.forEach(row => {
+        if (!selectedMonths.has(row.month)) return;
+        const delay = row.delay || 0;
+        if (!delay) return;
+        if (!companies[row.company]) companies[row.company] = { company: row.company, delay: 0, months: {} };
+        companies[row.company].delay += delay;
+        companies[row.company].months[row.month] = (companies[row.company].months[row.month] || 0) + delay;
+      });
+      const delayedCompanies = Object.values(companies).sort((a, b) => b.delay - a.delay || a.company.localeCompare(b.company));
+      document.getElementById("delayCompanyList").innerHTML = delayedCompanies.map(row => {
+        const delayMonths = Object.keys(row.months).sort((a, b) => a.localeCompare(b));
+        const monthRange = delayMonths.length
+          ? `${chartMonthLabel(delayMonths[0])} to ${chartMonthLabel(delayMonths[delayMonths.length - 1])}`
+          : "-";
+        return `<div class="delay-company-row">
+          <div class="delay-company-head"><span title="${escapeHtml(row.company)}">${escapeHtml(row.company)}</span><span class="delay-company-count">${row.delay} delay</span></div>
+          <div class="delay-range">${monthRange}</div>
+        </div>`;
+      }).join("") || `<div class="empty">No delayed companies in this selection</div>`;
+    }
+    function renderDurationTable(rows, months, key, tableId) {
+      const selectedMonths = new Set(months);
+      const companies = {};
+      rows.forEach(row => {
+        if (!selectedMonths.has(row.month) || !(row[key] || 0)) return;
+        if (!companies[row.company]) companies[row.company] = { company: row.company, months: [] };
+        companies[row.company].months.push(row.month);
+      });
+      const items = Object.values(companies).map(row => {
+        const sortedMonths = [...new Set(row.months)].sort((a, b) => a.localeCompare(b));
+        return {
+          company: row.company,
+          start: sortedMonths[0],
+          end: sortedMonths[sortedMonths.length - 1]
+        };
+      }).sort((a, b) => a.company.localeCompare(b.company));
+      document.getElementById(tableId).innerHTML = items.map(row =>
+        `<tr><td>${escapeHtml(row.company)}</td><td>${chartMonthLabel(row.start)} to ${chartMonthLabel(row.end)}</td></tr>`
+      ).join("") || `<tr><td class="empty" colspan="2">No records in this selection</td></tr>`;
+    }
     function render() {
       buildTabs("serviceTabs", services, "service");
       buildTabs("picTabs", pics, "pic");
       buildTabs("roleTabs", roles, "role");
+      buildTabs("invoiceTypeTabs", eInvoiceTypes, "invoiceType");
       document.getElementById("roleRow").style.display = state.service === "Accounting" ? "grid" : "none";
-      document.getElementById("approvalCard").style.display = showApproval() ? "block" : "none";
+      document.getElementById("invoiceTypeRow").style.display = state.service === "E-Invoice" ? "grid" : "none";
+      document.getElementById("approvalCard").style.display = showApprovalMetric() ? "block" : "none";
       document.querySelectorAll(".approval-only").forEach(cell => cell.classList.toggle("hidden", !showApproval()));
-      document.getElementById("naCard").style.display = showNotApplicable() ? "block" : "none";
       document.querySelectorAll(".na-only").forEach(cell => cell.classList.toggle("hidden", !showNotApplicable()));
 
       const now = new Date();
@@ -387,57 +866,127 @@
       if (fromInput.value > toInput.value) toInput.value = fromInput.value;
       const from = fromInput.value;
       const effectiveTo = previousMonth(toInput.value);
-      document.getElementById("dateSummary").textContent = effectiveTo >= from
-        ? `${monthLabel(from)} to ${monthLabel(effectiveTo)} (cutoff: ${monthLabel(toInput.value)})`
-        : `No tasks due before ${monthLabel(toInput.value)}`;
+      document.getElementById("dateSummary").textContent = `* Check the works until ${monthLabel(effectiveTo)}.`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
       const rows = filteredData();
+      const companyRows = filteredCompanyRows();
+      buildCompanyBoxes(companyRows);
+      const chartRows = state.detailCompany === "All Companies"
+        ? companyRows
+        : companyRows.filter(row => row.company === state.detailCompany);
       const totals = { Completed: 0, Delay: 0, "Wait for Approval": 0, "Not Applicable": 0 };
       const monthly = months.map(month => {
         const counts = taskCounts(month, rows);
         Object.keys(totals).forEach(k => totals[k] += counts[k]);
         return { month, ...counts };
       });
+      const chartMonthly = months.map(month => ({
+        month,
+        Completed: chartRows.filter(row => row.month === month).reduce((sum, row) => sum + row.completed, 0),
+        Delay: chartRows.filter(row => row.month === month).reduce((sum, row) => sum + (row.delay || ((row.notDone || 0) + (row.missed || 0))), 0),
+        "Not Applicable": chartRows.filter(row => row.month === month).reduce((sum, row) => sum + (row.notApplicable || 0), 0)
+      }));
+      const chartCompletedTotal = chartMonthly.reduce((sum, row) => sum + row.Completed, 0);
+      const chartDelayTotal = chartMonthly.reduce((sum, row) => sum + row.Delay, 0);
       const active = totals.Completed + totals.Delay + totals["Wait for Approval"];
       document.getElementById("companyKpi").textContent = companyCount(rows);
-      document.getElementById("completeKpi").textContent = totals.Completed;
-      document.getElementById("delayKpi").textContent = totals.Delay;
+      document.getElementById("trendDetail").classList.toggle("open", state.trendOpen);
+      document.getElementById("chartCompletedTotal").textContent = chartCompletedTotal;
+      document.getElementById("chartDelayTotal").textContent = chartDelayTotal;
+      const completionRate = active ? totals.Completed / active * 100 : 0;
+      const donutActive = totals.Completed + totals.Delay;
+      const donutDegrees = donutActive ? totals.Completed / donutActive * 360 : 0;
+      state.donutDegrees = donutDegrees;
+      state.donutActive = donutActive;
+      document.getElementById("statusDonut").style.background = donutActive
+        ? `conic-gradient(${colors.Completed} 0deg ${donutDegrees}deg, ${colors.Delay} ${donutDegrees}deg 360deg)`
+        : "conic-gradient(#d7dde5 0deg 360deg)";
+      document.getElementById("statusDonut").classList.toggle("focus-complete", state.trendFocus === "complete");
+      document.getElementById("statusDonut").classList.toggle("focus-delay", state.trendFocus === "delay");
+      document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
+      document.getElementById("donutAssignedLegend").textContent = active;
+      document.getElementById("donutCompleteLegend").textContent = totals.Completed;
+      document.getElementById("donutDelayLegend").textContent = totals.Delay;
+      document.getElementById("completionCalcValues").textContent = `${totals.Completed} / (${totals.Completed} + ${totals.Delay} + ${totals["Wait for Approval"]})`;
+      document.getElementById("completionCalcResult").textContent = active
+        ? `= ${totals.Completed} / ${active} = ${completionRate.toFixed(1)}%`
+        : "= 0.0%";
       document.getElementById("approvalKpi").textContent = totals["Wait for Approval"];
-      document.getElementById("naKpi").textContent = totals["Not Applicable"];
       const completedMonths = monthly.filter(x => x.Delay === 0 && x["Wait for Approval"] === 0 && x.Completed > 0).length;
-      const incompleteMonths = monthly.filter(x => x.Delay > 0 || x["Wait for Approval"] > 0).length;
-      document.getElementById("rateKpi").textContent = active ? `${(totals.Completed / active * 100).toFixed(1)}%` : "0%";
+      const delayMonths = monthly.filter(x => x.Delay > 0 || x["Wait for Approval"] > 0).length;
 
-      const max = Math.max(...monthly.map(x => x.Completed), 1);
-      const yTicks = [0, .25, .5, .75, 1].map(ratio =>
-        `<span class="y-tick" style="bottom:${ratio * 100}%">${Math.round(max * ratio)}</span>`
-      ).join("");
-      document.getElementById("chart").innerHTML = `<div class="axis-title">QUANTITY</div><div class="y-axis">${yTicks}</div>
-        ${monthly.map(x => {
-          const height = x.Completed / max * 220;
-          return `<div class="bar-wrap"><div class="bar" style="height:${height}px;background:${colors.Completed}">
-            ${x.Completed ? `<span class="bar-value">${x.Completed}</span>` : ""}
-          </div><span class="line-month-label" style="left:50%">${chartMonthLabel(x.month)}</span></div>`;
-        }).join("")}`;
+      const completeDim = state.trendFocus === "delay" ? " dimmed" : "";
+      const delayDim = state.trendFocus === "complete" ? " dimmed" : "";
+      const monthAxis = chartMonthly.map(x => `<div class="gantt-axis">${chartMonthLabel(x.month)}</div>`).join("");
+      const ganttRow = (label, key, className, dimClass) =>
+        `<div class="gantt-row-label">${label}</div>` +
+        chartMonthly.map(x => {
+          const count = x[key];
+          const empty = count ? "" : " empty";
+          const dimmed = count ? dimClass : "";
+          return `<div class="gantt-cell"><div class="gantt-bar ${className}${empty}${dimmed}" title="${chartMonthLabel(x.month)} ${label.toLowerCase()}: ${count}">${count || ""}</div></div>`;
+        }).join("");
+      document.getElementById("chart").innerHTML =
+        `<div class="gantt-grid" style="--month-count:${Math.max(chartMonthly.length, 1)}">
+          <div class="gantt-axis">Status</div>${monthAxis}
+          ${ganttRow("Completed", "Completed", "complete", completeDim)}
+          ${ganttRow("Delay", "Delay", "delay", delayDim)}
+          ${ganttRow("Not Applicable", "Not Applicable", "na", "")}
+        </div>`;
 
-      document.getElementById("statusList").innerHTML = Object.keys(totals).filter(k =>
-        (k !== "Wait for Approval" || showApproval()) &&
-        (k !== "Not Applicable" || showNotApplicable())
-      ).map(k =>
-        `<div class="status-row"><i class="dot" style="background:${colors[k]}"></i><span>${k}</span><strong>${totals[k]}</strong></div>`
-      ).join("") +
-        `<div class="status-row"><i class="dot" style="background:${colors.Completed}"></i><span>Months completed</span><strong>${completedMonths}</strong></div>` +
-        `<div class="status-row"><i class="dot" style="background:${colors.Delay}"></i><span>Months not completed</span><strong>${incompleteMonths}</strong></div>`;
-
-      document.getElementById("monthTable").innerHTML = monthly.map(x => {
-        const flag = x.Delay > 0 ? "Delay" : x["Wait for Approval"] > 0 ? "Wait for Approval" : x.Completed > 0 ? "Completed" : x["Not Applicable"] > 0 ? "Not Applicable" : "No Tasks";
-        const flagClass = flag === "Delay" ? "delay" : flag === "Completed" ? "complete" : flag === "Wait for Approval" ? "approval" : flag === "Not Applicable" ? "na" : "none";
-        return `<tr><td>${monthLabel(x.month)}</td><td>${x.Completed}</td><td class="approval-only ${showApproval() ? "" : "hidden"}">${x["Wait for Approval"]}</td><td class="na-only ${showNotApplicable() ? "" : "hidden"}">${x["Not Applicable"]}</td><td>${x.Blank}</td><td>${x.Hyphen}</td><td>${x.Delay}</td>
-          <td><span class="pill ${flagClass}">${flag}</span></td></tr>`;
-      }).join("") || `<tr><td class="empty" colspan="8">No months selected</td></tr>`;
+      renderDelayBreakdown(companyRows, months);
+      renderDurationTable(companyRows, months, "waitApproval", "waitApprovalTable");
+      renderDurationTable(companyRows, months, "notApplicable", "notApplicableTable");
     }
     ["fromDate", "toDate"].forEach(id => document.getElementById(id).addEventListener("change", render));
+    function navigateToCompanyBoxes() {
+      state.trendOpen = true;
+      render();
+      const panel = document.getElementById("companyDetailPanel");
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      const activeCompany = panel.querySelector(".company-box.active") || panel.querySelector(".company-box");
+      if (activeCompany) activeCompany.focus({ preventScroll: true });
+    }
+    document.getElementById("companyKpiCard").addEventListener("click", navigateToCompanyBoxes);
+    document.getElementById("companyKpiCard").addEventListener("keydown", event => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      navigateToCompanyBoxes();
+    });
+    function selectDonutSegment(focus) {
+      if (!state.donutActive) return;
+      state.trendFocus = state.trendFocus === focus ? null : focus;
+      state.trendOpen = true;
+      render();
+      document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    document.getElementById("statusDonut").addEventListener("click", event => {
+      if (!state.donutActive) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = event.clientX - (rect.left + rect.width / 2);
+      const y = event.clientY - (rect.top + rect.height / 2);
+      const angle = (Math.atan2(y, x) * 180 / Math.PI + 90 + 360) % 360;
+      selectDonutSegment(angle <= state.donutDegrees ? "complete" : "delay");
+    });
+    document.getElementById("statusDonut").addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        selectDonutSegment("complete");
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        selectDonutSegment("delay");
+      }
+    });
+    document.getElementById("companyBoxList").addEventListener("click", event => {
+      const button = event.target.closest(".company-box");
+      if (!button) return;
+      state.detailCompany = button.dataset.company;
+      state.company = state.detailCompany;
+      state.trendOpen = true;
+      render();
+    });
     render();
   </script>
 </body>
