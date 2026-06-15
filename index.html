@@ -804,15 +804,15 @@
         <div class="card" id="approvalCard"><div class="label">Wait for Approval</div><div class="value" id="approvalKpi">0</div></div>
       </div>
       <div class="status-guidance">
-        Click <strong>Companies</strong> to open Monthly Status Trend and show all companies. Click the <strong>Completed</strong> or <strong>Delay</strong> doughnut segment to filter the Monthly Status Trend to show only that status type. Click <strong>Select All</strong> to clear the filter and show both completed and delay tasks.
+        Click <strong>Companies</strong> to open Monthly Status Trend and show all companies. Click the <strong>Completed</strong> or <strong>Delay</strong> doughnut segment to show the full all-company Monthly Status Trend for that status, or click <strong>Select All</strong> to clear the highlight.
       </div>
     </section>
 
     <section class="grid">
       <div class="panel">
         <div class="panel-head">
-          <h2 id="trendPanelTitle">Monthly Status Trend</h2>
-          <div class="sub" id="trendPanelSub">Completed-task quantity by selected month.</div>
+          <h2>Monthly Status Trend</h2>
+          <div class="sub">Completed-task quantity by selected month.</div>
         </div>
         <div class="trend-detail" id="trendDetail">
           <div class="legend">
@@ -1364,16 +1364,8 @@
       const active = totals.Completed + totals.Delay + totals["Wait for Approval"];
       document.getElementById("companyKpi").textContent = companyCount(companyRows);
       document.getElementById("trendDetail").classList.toggle("open", state.trendOpen);
-      document.getElementById("trendPanelTitle").textContent = trendPanelTitle;
-      document.getElementById("trendPanelSub").textContent = state.trendFocus === "complete"
-        ? "Showing completed tasks quantity by selected month."
-        : state.trendFocus === "delay"
-          ? "Showing delay tasks quantity by selected month."
-          : "Completed and delay tasks quantity by selected month.";
       document.getElementById("chartCompletedTotal").textContent = chartCompletedTotal;
       document.getElementById("chartDelayTotal").textContent = chartDelayTotal;
-      document.getElementById("chartCompletedTotal").parentElement.style.display = state.trendFocus === "delay" ? "none" : "inline-flex";
-      document.getElementById("chartDelayTotal").parentElement.style.display = state.trendFocus === "complete" ? "none" : "inline-flex";
       const completionRate = active ? totals.Completed / active * 100 : 0;
       const donutActive = totals.Completed + totals.Delay;
       const donutGap = totals.Completed && totals.Delay ? 4 : 0;
@@ -1400,12 +1392,6 @@
       document.getElementById("approvalKpi").textContent = totals["Wait for Approval"];
       const completedMonths = monthly.filter(x => x.Delay === 0 && x["Wait for Approval"] === 0 && x.Completed > 0).length;
       const delayMonths = monthly.filter(x => x.Delay > 0 || x["Wait for Approval"] > 0).length;
-      
-      const trendPanelTitle = state.trendFocus === "complete" 
-        ? "Monthly Status Trend - Completed Tasks"
-        : state.trendFocus === "delay"
-          ? "Monthly Status Trend - Delay Tasks"
-          : "Monthly Status Trend";
 
       const monthAxis = chartMonthly.map(x => `<div class="gantt-axis">${chartMonthLabel(x.month)}</div>`).join("");
       const ganttRow = (label, key, className, focus) =>
@@ -1429,11 +1415,8 @@
         </div>`;
 
       renderDelayBreakdown(statusRows, months);
-      
-      const delayPanel = document.querySelector(".grid > .panel:nth-child(2)");
-      if (delayPanel) {
-        delayPanel.style.display = state.trendFocus === "complete" ? "none" : "block";
-      }
+      renderDurationTable(companyRows, months, "waitApproval", "waitApprovalTable");
+      renderDurationTable(companyRows, months, "notApplicable", "notApplicableTable");
     }
     ["fromDate", "toDate"].forEach(id => document.getElementById(id).addEventListener("change", render));
     document.getElementById("excelUpload").addEventListener("change", async event => {
