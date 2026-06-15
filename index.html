@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="canonical" href="https://kpi-dashboard.vin8228.workers.dev/?v=20260611a">
   <title>KPI Dashboard Filter Preview</title>
   <style>
     :root {
@@ -37,6 +38,53 @@
     }
     h1 { margin: 0 0 6px; font-size: 26px; }
     header p { margin: 0; opacity: .82; }
+    .header-actions {
+      display: grid;
+      gap: 8px;
+      justify-items: end;
+      min-width: 260px;
+    }
+    .upload-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .upload-button,
+    .revert-button {
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.38);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: #fff;
+      background: rgba(255,255,255,.12);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .upload-button:hover,
+    .upload-button:focus,
+    .revert-button:hover,
+    .revert-button:focus {
+      outline: none;
+      background: rgba(255,255,255,.2);
+    }
+    .current-file {
+      max-width: 330px;
+      color: rgba(255,255,255,.84);
+      font-size: 12px;
+      font-weight: 650;
+      text-align: right;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .upload-status {
+      max-width: 330px;
+      color: rgba(255,255,255,.72);
+      font-size: 11px;
+      text-align: right;
+      line-height: 1.35;
+    }
     main { padding: 20px 26px 34px; }
     .panel, .card {
       border: 1px solid var(--line);
@@ -99,6 +147,9 @@
       font-weight: 650;
       line-height: 1.4;
     }
+    .filter-note span {
+      display: block;
+    }
     .dates { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
     .date-control label {
       display: block;
@@ -156,6 +207,106 @@
       gap: 13px;
       margin-top: 14px;
       align-items: stretch;
+    }
+    .status-guidance {
+      margin-top: 13px;
+      padding: 13px 15px;
+      border: 1px solid #cbd9eb;
+      border-left: 4px solid var(--blue);
+      border-radius: 8px;
+      color: #30445f;
+      background: #f0f5fb;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.55;
+    }
+    .status-guidance strong {
+      color: var(--ink);
+      font-weight: 850;
+    }
+    .service-rate-panel {
+      margin: 16px 0;
+      padding: 18px;
+    }
+    .service-rate-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .rate-chart-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .rate-chart-title {
+      margin-bottom: 10px;
+      color: #30445f;
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .rate-chart-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px;
+      gap: 10px;
+      align-items: center;
+    }
+    .rate-chart {
+      width: 100%;
+      min-height: 245px;
+      overflow: hidden;
+    }
+    .rate-chart svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .rate-axis {
+      fill: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+    }
+    .rate-grid-line {
+      stroke: #e8edf3;
+      stroke-width: 1;
+    }
+    .rate-line {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .rate-point {
+      stroke: #fff;
+      stroke-width: 2;
+    }
+    .rate-annotation {
+      font-size: 10px;
+      font-weight: 850;
+      paint-order: stroke;
+      stroke: #fff;
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+    .rate-legend {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+      font-size: 12px;
+      font-weight: 750;
+      color: #34445a;
+    }
+    .rate-legend-row {
+      display: grid;
+      grid-template-columns: 12px 1fr;
+      gap: 7px;
+      align-items: center;
+    }
+    .rate-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
     }
     .card { padding: 17px; }
     .clickable-card {
@@ -235,7 +386,7 @@
     }
     .status-donut-list {
       display: grid;
-      gap: 9px;
+      gap: 11px;
     }
     .completion-calc-box {
       min-height: 118px;
@@ -278,9 +429,51 @@
       color: #34445a;
       font-size: 13px;
     }
+    button.status-donut-row {
+      cursor: pointer;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: #fff;
+      font: inherit;
+      text-align: left;
+      transition: border-color .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+    button.status-donut-row:hover,
+    button.status-donut-row:focus {
+      outline: none;
+      border-color: #91abd0;
+      box-shadow: 0 4px 12px rgba(16,43,78,.06);
+    }
+    button.status-donut-row.active {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(36,85,141,.12);
+    }
+    button.status-donut-row.dimmed {
+      opacity: .46;
+    }
     .status-donut-row strong {
       color: var(--ink);
       font-size: 18px;
+    }
+    .status-select-all {
+      cursor: pointer;
+      width: 100%;
+      border: 1px solid #cbd9eb;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: #23466f;
+      background: #edf5ff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+    }
+    .status-select-all.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
     }
     .company-detail-panel {
       margin-top: 14px;
@@ -520,6 +713,7 @@
       .filter-row { grid-template-columns: 1fr; gap: 7px; }
       .service-selection { grid-template-columns: 1fr; }
       .cards, .status-metrics { grid-template-columns: repeat(2, 1fr); }
+      .service-rate-grid { grid-template-columns: 1fr; }
       .status-donut-card { grid-column: 1 / -1; grid-template-columns: 130px minmax(160px, 1fr) minmax(0, 1fr); }
       .status-donut { width: 120px; height: 120px; }
       .grid { grid-template-columns: 1fr; }
@@ -527,6 +721,8 @@
     @media (max-width: 620px) {
       .cards, .status-metrics { grid-template-columns: 1fr; }
       .status-donut-card { grid-template-columns: 1fr; }
+      .rate-chart-body { grid-template-columns: 1fr; }
+      .rate-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .status-donut { margin: 0 auto; }
     }
   </style>
@@ -536,6 +732,15 @@
     <div>
       <h1>KPI Dashboard</h1>
       <p>Monthly completion and delay monitoring</p>
+    </div>
+    <div class="header-actions">
+      <div class="upload-actions">
+        <label class="upload-button" for="excelUpload">Upload Document</label>
+        <input id="excelUpload" type="file" accept=".xlsx,.xls" hidden>
+        <button type="button" class="revert-button" id="revertExcelButton">Revert Original Excel</button>
+      </div>
+      <div class="current-file" id="currentFileName">Current file: KPI Checklist for Closing Year 2026.xlsx</div>
+      <div class="upload-status" id="uploadStatus">Upload a new Excel file to reanalyse the dashboard.</div>
     </div>
   </header>
 
@@ -552,7 +757,10 @@
         <div class="filter-label">Service</div>
         <div class="service-selection">
           <div class="tabs" id="serviceTabs"></div>
-          <div class="filter-note">* Only Accounting section shows Main Reviewer and Sub Reviewer role options.</div>
+          <div class="filter-note">
+            <span>* Only Accounting section shows Main Reviewer and Sub Reviewer role options.</span>
+            <span>Only E-Invoice shows billed and self-bill type options.</span>
+          </div>
         </div>
       </div>
       <div class="filter-row" id="invoiceTypeRow">
@@ -602,11 +810,15 @@
           </div>
           <div class="status-donut-list">
             <div class="status-donut-row"><i class="dot" style="background:var(--blue)"></i><span>Total Assigned Tasks</span><strong id="donutAssignedLegend">0</strong></div>
-            <div class="status-donut-row"><i class="dot" style="background:var(--green)"></i><span>Completed Tasks</span><strong id="donutCompleteLegend">0</strong></div>
-            <div class="status-donut-row"><i class="dot" style="background:var(--red)"></i><span>Delay Tasks</span><strong id="donutDelayLegend">0</strong></div>
+            <button type="button" class="status-donut-row" id="completeStatusButton"><i class="dot" style="background:var(--green)"></i><span>Completed Tasks</span><strong id="donutCompleteLegend">0</strong></button>
+            <button type="button" class="status-donut-row" id="delayStatusButton"><i class="dot" style="background:var(--red)"></i><span>Delay Tasks</span><strong id="donutDelayLegend">0</strong></button>
+            <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
           </div>
         </div>
         <div class="card" id="approvalCard"><div class="label">Wait for Approval</div><div class="value" id="approvalKpi">0</div></div>
+      </div>
+      <div class="status-guidance">
+        Click <strong>Companies</strong> to open Monthly Status Trend and show all companies. Click <strong>Completed Tasks</strong> or <strong>Delay Tasks</strong> to view the completed or delay portion inside the Gantt chart, or click <strong>Select All</strong> to show all portions.
       </div>
     </section>
 
@@ -620,7 +832,6 @@
           <div class="legend">
             <span><i class="dot" style="background:var(--green)"></i>Completed</span>
             <span><i class="dot" style="background:var(--red)"></i>Delay</span>
-            <span><i class="dot" style="background:var(--gray)"></i>Not Applicable</span>
           </div>
           <div class="chart-tools">
             <div class="chart-total"><span>Total completed tasks</span><strong id="chartCompletedTotal">0</strong></div>
@@ -669,8 +880,30 @@
         <tbody id="notApplicableTable"></tbody>
       </table>
     </section>
+
+    <section class="panel service-rate-panel">
+      <h2>Service Rate Trend by PIC</h2>
+      <div class="sub">Percentage by service for completed and delay tasks in the selected month range.</div>
+      <div class="service-rate-grid">
+        <div class="rate-chart-card">
+          <div class="rate-chart-title">Completed Task Completion Rate</div>
+          <div class="rate-chart-body">
+            <div class="rate-chart" id="completedRateChart"></div>
+            <div class="rate-legend" id="completedRateLegend"></div>
+          </div>
+        </div>
+        <div class="rate-chart-card">
+          <div class="rate-chart-title">Delay Task Rate</div>
+          <div class="rate-chart-body">
+            <div class="rate-chart" id="delayRateChart"></div>
+            <div class="rate-legend" id="delayRateLegend"></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="dashboard-data.js"></script>
   <script src="dashboard-company-data.js"></script>
   <script>
@@ -680,6 +913,11 @@
     const eInvoiceTypes = ["Billed", "Self-bill"];
     const state = { service: "Accounting", pic: "Yoong Shi", role: "Main Reviewer", invoiceType: "Billed", company: "All Companies", detailCompany: "All Companies", trendOpen: false, trendFocus: null };
     const colors = { Completed: "#19a477", Delay: "#df5a62", "Wait for Approval": "#eea52c", "Not Applicable": "#95a1b2" };
+    const picColors = { "Yoong Shi": "#24558d", "Jia Wen": "#19a477", "Ling Yin": "#eea52c", Iza: "#7461d1" };
+    const originalDashboardData = dashboardData.slice();
+    const originalDashboardCompanyData = dashboardCompanyData.slice();
+    let activeDashboardData = originalDashboardData;
+    let activeDashboardCompanyData = originalDashboardCompanyData;
 
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -711,6 +949,9 @@
       const date = new Date(year, month - 2, 1);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     }
+    function availableEInvoiceTypes() {
+      return ["Jia Wen", "Ling Yin"].includes(state.pic) ? ["Billed"] : eInvoiceTypes;
+    }
     function buildTabs(id, values, key) {
       const root = document.getElementById(id);
       root.innerHTML = values.map(v => `<button class="tab ${state[key] === v ? "active" : ""}" data-value="${v}">${v}</button>`).join("");
@@ -736,7 +977,7 @@
         state.pic === "Yoong Shi" &&
         role === "Sub";
       const effectiveRole = samePersonReviewer ? "Main" : role;
-      return dashboardData.filter(row =>
+      return activeDashboardData.filter(row =>
         row.service === state.service &&
         (state.pic === "All PIC" || row.pic === state.pic.toUpperCase()) &&
         (!effectiveRole || row.role === effectiveRole) &&
@@ -750,7 +991,7 @@
         state.pic === "Yoong Shi" &&
         role === "Sub";
       const effectiveRole = samePersonReviewer ? "Main" : role;
-      return dashboardCompanyData.filter(row =>
+      return activeDashboardCompanyData.filter(row =>
         row.service === state.service &&
         (state.pic === "All PIC" || row.pic === state.pic.toUpperCase()) &&
         (!effectiveRole || row.role === effectiveRole) &&
@@ -760,6 +1001,12 @@
     function buildCompanyBoxes(rows) {
       const root = document.getElementById("companyBoxList");
       const companies = [...new Set(rows.map(row => row.company))].sort((a, b) => a.localeCompare(b));
+      const pretendCompany = "MAKMUR STEEL E-PCB";
+      const anchorCompany = "ORIENTSYS TECHNOLOGY SDN BHD";
+      if (companies.includes(pretendCompany) && companies.includes(anchorCompany)) {
+        companies.splice(companies.indexOf(pretendCompany), 1);
+        companies.splice(companies.indexOf(anchorCompany) + 1, 0, pretendCompany);
+      }
       if (state.detailCompany !== "All Companies" && !companies.includes(state.detailCompany)) state.detailCompany = "All Companies";
       state.company = state.detailCompany;
       document.getElementById("companyDetailTitle").textContent = state.detailCompany;
@@ -796,12 +1043,7 @@
     }
     function companyCount(rows) {
       if (state.service === "Accounting" && state.pic === "Iza" && state.role === "Sub Reviewer") return 9;
-      const groups = {};
-      rows.forEach(row => {
-        const key = `${row.service}|${row.pic}`;
-        groups[key] = Math.max(groups[key] || 0, row.companies);
-      });
-      return Object.values(groups).reduce((sum, count) => sum + count, 0);
+      return new Set(rows.map(row => row.company)).size;
     }
     function renderDelayBreakdown(rows, months) {
       const selectedMonths = new Set(months);
@@ -846,11 +1088,247 @@
         `<tr><td>${escapeHtml(row.company)}</td><td>${chartMonthLabel(row.start)} to ${chartMonthLabel(row.end)}</td></tr>`
       ).join("") || `<tr><td class="empty" colspan="2">No records in this selection</td></tr>`;
     }
+    function isIzaPayrollGmaxStartCondition(row) {
+      return row.service === "Payroll" &&
+        row.pic === "IZA" &&
+        row.company === "GMAX ENGINEERING SDN BHD";
+    }
+    function rollupCompanyMonthStatus(rows, months) {
+      const selectedMonths = new Set(months);
+      const groups = {};
+      rows.forEach(row => {
+        if (!selectedMonths.has(row.month)) return;
+        const applyGmaxStartRule = isIzaPayrollGmaxStartCondition(row);
+        if (applyGmaxStartRule && row.month < "2026-01") return;
+        const key = `${row.company}|${row.month}`;
+        if (!groups[key]) {
+          groups[key] = { company: row.company, month: row.month, completed: 0, delay: 0, waitApproval: 0, notApplicable: 0 };
+        }
+        groups[key].completed += row.completed || 0;
+        groups[key].delay += applyGmaxStartRule && row.month <= "2026-04" ? 0 : row.delay || ((row.notDone || 0) + (row.missed || 0));
+        groups[key].waitApproval += row.waitApproval || 0;
+        groups[key].notApplicable += row.notApplicable || 0;
+      });
+      return Object.values(groups).map(row => ({
+        ...row,
+        delay: row.completed > 0 ? 0 : row.delay
+      }));
+    }
+    function servicePicRows(service, pic) {
+      return activeDashboardCompanyData.filter(row =>
+        row.service === service &&
+        row.pic === pic.toUpperCase() &&
+        row.role === "Main" &&
+        (service !== "E-Invoice" || row.invoiceType === "Billed")
+      );
+    }
+    function servicePicRates(months) {
+      return pics.map(pic => ({
+        pic,
+        color: picColors[pic],
+        points: services.map(service => {
+          const rows = rollupCompanyMonthStatus(servicePicRows(service, pic), months);
+          const completed = rows.reduce((sum, row) => sum + row.completed, 0);
+          const delay = rows.reduce((sum, row) => sum + row.delay, 0);
+          const waitApproval = service === "SST" && ["Yoong Shi", "Ling Yin", "Iza"].includes(pic)
+            ? rows.reduce((sum, row) => sum + row.waitApproval, 0)
+            : 0;
+          const active = completed + delay + waitApproval;
+          return {
+            service,
+            completedRate: active ? completed / active * 100 : null,
+            delayRate: active ? delay / active * 100 : null
+          };
+        })
+      }));
+    }
+    function renderRateChart(chartId, legendId, series, key) {
+      const width = 520;
+      const height = 260;
+      const pad = { left: 42, right: 78, top: 18, bottom: 45 };
+      const plotWidth = width - pad.left - pad.right;
+      const plotHeight = height - pad.top - pad.bottom;
+      const xFor = index => pad.left + (services.length === 1 ? 0 : index * (plotWidth / (services.length - 1)));
+      const yFor = value => pad.top + (100 - value) / 100 * plotHeight;
+      const yTicks = [0, 50, 100];
+      const grid = yTicks.map(tick => {
+        const y = yFor(tick);
+        return `<line class="rate-grid-line" x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}"></line><text class="rate-axis" x="8" y="${y + 4}">${tick}%</text>`;
+      }).join("");
+      const xLabels = services.map((service, index) =>
+        `<text class="rate-axis" x="${xFor(index)}" y="${height - 16}" text-anchor="middle">${escapeHtml(service)}</text>`
+      ).join("");
+      const lines = series.map(row => {
+        const points = row.points
+          .map((point, index) => point[key] == null ? null : { x: xFor(index), y: yFor(point[key]), value: point[key] })
+          .filter(Boolean);
+        if (!points.length) return "";
+        const polyline = points.map(point => `${point.x},${point.y}`).join(" ");
+        const pointDots = points.map(point =>
+          `<circle class="rate-point" cx="${point.x}" cy="${point.y}" r="4" fill="${row.color}"><title>${escapeHtml(row.pic)} ${point.value.toFixed(1)}%</title></circle>`
+        ).join("");
+        const last = points[points.length - 1];
+        return `<polyline class="rate-line" points="${polyline}" stroke="${row.color}"></polyline>${pointDots}<text class="rate-annotation" x="${last.x + 8}" y="${last.y + 4}" fill="${row.color}">${escapeHtml(row.pic)}</text>`;
+      }).join("");
+      document.getElementById(chartId).innerHTML =
+        `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${chartId}">
+          ${grid}
+          <line class="rate-grid-line" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
+          <line class="rate-grid-line" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
+          ${xLabels}
+          ${lines}
+        </svg>`;
+      document.getElementById(legendId).innerHTML = series.map(row =>
+        `<div class="rate-legend-row"><span class="rate-legend-swatch" style="background:${row.color}"></span><span>${escapeHtml(row.pic)}</span></div>`
+      ).join("");
+    }
+    function renderServiceRateCharts(months) {
+      const series = servicePicRates(months);
+      renderRateChart("completedRateChart", "completedRateLegend", series, "completedRate");
+      renderRateChart("delayRateChart", "delayRateLegend", series, "delayRate");
+    }
+    function excelSerialToMonth(value) {
+      const serial = Number(value);
+      if (!Number.isFinite(serial)) return "";
+      const date = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+    }
+    function normalizeMonthValue(value) {
+      if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}`;
+      }
+      const text = String(value || "").trim();
+      if (!text) return "";
+      if (/^\d{4}-\d{2}/.test(text)) return text.slice(0, 7);
+      if (/^\d+(\.\d+)?$/.test(text)) return excelSerialToMonth(text);
+      const parsed = new Date(text);
+      return Number.isNaN(parsed.getTime()) ? "" : `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}`;
+    }
+    function numericFlag(value) {
+      const number = Number(value);
+      return Number.isFinite(number) && number > 0 ? number : 0;
+    }
+    function invoiceTypeFromRecord(record) {
+      const source = [record["Invoice Type"], record["E-Invoice Type"], record.Type, record.Basis, record["Source Sheet"]]
+        .filter(Boolean)
+        .join(" ");
+      return /self/i.test(source) ? "Self-bill" : "Billed";
+    }
+    function recordStatusText(record) {
+      return [record["Status Category"], record["Raw Status"]].filter(Boolean).join(" ").toLowerCase();
+    }
+    function rowsFromCleanRecords(records) {
+      const groups = {};
+      records.forEach(record => {
+        const service = String(record.Service || "").trim();
+        const pic = String(record.PIC || record.Reviewer || "").trim().toUpperCase();
+        const company = String(record.Company || "").trim();
+        const month = normalizeMonthValue(record.Month);
+        if (!service || !pic || !company || !month) return;
+        const role = /sub/i.test(String(record["Reviewer Type"] || "")) ? "Sub" : "Main";
+        const invoiceType = service === "E-Invoice" ? invoiceTypeFromRecord(record) : undefined;
+        const key = [service, pic, role, invoiceType || "", company, month].join("|");
+        const statusText = recordStatusText(record);
+        if (!groups[key]) {
+          groups[key] = { service, pic, role, company, month, completed: 0, delay: 0, notDone: 0, missed: 0, waitApproval: 0, notApplicable: 0 };
+          if (invoiceType) groups[key].invoiceType = invoiceType;
+        }
+        const completed = numericFlag(record["Completed Flag"]) || (/completed/.test(statusText) ? 1 : 0);
+        const notDone = numericFlag(record["Incomplete Flag"]);
+        const missed = numericFlag(record["Missed Flag"]);
+        const waitApproval = /approval/.test(statusText) ? 1 : 0;
+        const notApplicable = /not applicable|n\/a|\bna\b/.test(statusText) ? 1 : 0;
+        groups[key].completed += completed;
+        groups[key].notDone += notDone;
+        groups[key].missed += missed;
+        groups[key].delay += notDone + missed;
+        groups[key].waitApproval += waitApproval;
+        groups[key].notApplicable += notApplicable;
+      });
+      return Object.values(groups);
+    }
+    function summaryRowsFromCompanyRows(companyRows) {
+      const groups = {};
+      companyRows.forEach(row => {
+        const key = [row.service, row.pic, row.role, row.invoiceType || "", row.month].join("|");
+        if (!groups[key]) {
+          groups[key] = {
+            service: row.service,
+            pic: row.pic,
+            role: row.role,
+            month: row.month,
+            completed: 0,
+            blank: 0,
+            hyphen: 0,
+            companies: new Set(),
+            waitApproval: 0,
+            notApplicable: 0
+          };
+          if (row.invoiceType) groups[key].invoiceType = row.invoiceType;
+        }
+        groups[key].completed += row.completed || 0;
+        groups[key].blank += row.delay || 0;
+        groups[key].companies.add(row.company);
+        groups[key].waitApproval += row.waitApproval || 0;
+        groups[key].notApplicable += row.notApplicable || 0;
+      });
+      return Object.values(groups).map(row => ({
+        ...row,
+        companies: row.companies.size
+      }));
+    }
+    function cleanRecordsFromWorkbook(workbook) {
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: true });
+        const headerIndex = rows.findIndex(row =>
+          row.includes("Service") && row.includes("PIC") && row.includes("Company") && row.includes("Month")
+        );
+        if (headerIndex < 0) continue;
+        const headers = rows[headerIndex].map(header => String(header || "").trim());
+        return rows.slice(headerIndex + 1).map(row => {
+          const record = {};
+          headers.forEach((header, index) => {
+            if (header) record[header] = row[index];
+          });
+          return record;
+        });
+      }
+      return [];
+    }
+    function applyUploadedWorkbook(workbook, fileName) {
+      const records = cleanRecordsFromWorkbook(workbook);
+      if (!records.length) throw new Error("No Clean_Data style sheet was found.");
+      const companyRows = rowsFromCleanRecords(records);
+      if (!companyRows.length) throw new Error("No usable KPI records were found.");
+      activeDashboardCompanyData = companyRows;
+      activeDashboardData = summaryRowsFromCompanyRows(companyRows);
+      state.company = "All Companies";
+      state.detailCompany = "All Companies";
+      state.trendOpen = false;
+      state.trendFocus = null;
+      document.getElementById("currentFileName").textContent = `Current file: ${fileName}`;
+      document.getElementById("uploadStatus").textContent = `Analysed ${records.length} records from uploaded Excel file.`;
+      render();
+    }
+    function revertOriginalWorkbook() {
+      activeDashboardData = originalDashboardData;
+      activeDashboardCompanyData = originalDashboardCompanyData;
+      state.company = "All Companies";
+      state.detailCompany = "All Companies";
+      state.trendOpen = false;
+      state.trendFocus = null;
+      document.getElementById("excelUpload").value = "";
+      document.getElementById("currentFileName").textContent = "Current file: KPI Checklist for Closing Year 2026.xlsx";
+      document.getElementById("uploadStatus").textContent = "Reverted to the original bundled Excel analysis.";
+      render();
+    }
     function render() {
       buildTabs("serviceTabs", services, "service");
       buildTabs("picTabs", pics, "pic");
       buildTabs("roleTabs", roles, "role");
-      buildTabs("invoiceTypeTabs", eInvoiceTypes, "invoiceType");
+      if (!availableEInvoiceTypes().includes(state.invoiceType)) state.invoiceType = "Billed";
+      buildTabs("invoiceTypeTabs", availableEInvoiceTypes(), "invoiceType");
       document.getElementById("roleRow").style.display = state.service === "Accounting" ? "grid" : "none";
       document.getElementById("invoiceTypeRow").style.display = state.service === "E-Invoice" ? "grid" : "none";
       document.getElementById("approvalCard").style.display = showApprovalMetric() ? "block" : "none";
@@ -869,28 +1347,36 @@
       document.getElementById("dateSummary").textContent = `* Check the works until ${monthLabel(effectiveTo)}.`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
+      renderServiceRateCharts(months);
       const rows = filteredData();
       const companyRows = filteredCompanyRows();
       buildCompanyBoxes(companyRows);
       const chartRows = state.detailCompany === "All Companies"
         ? companyRows
         : companyRows.filter(row => row.company === state.detailCompany);
+      const statusRows = rollupCompanyMonthStatus(companyRows, months);
+      const chartStatusRows = rollupCompanyMonthStatus(chartRows, months);
       const totals = { Completed: 0, Delay: 0, "Wait for Approval": 0, "Not Applicable": 0 };
       const monthly = months.map(month => {
-        const counts = taskCounts(month, rows);
+        const monthRows = statusRows.filter(row => row.month === month);
+        const counts = {
+          Completed: monthRows.reduce((sum, row) => sum + row.completed, 0),
+          Delay: monthRows.reduce((sum, row) => sum + row.delay, 0),
+          "Wait for Approval": showApproval() ? monthRows.reduce((sum, row) => sum + row.waitApproval, 0) : 0,
+          "Not Applicable": showNotApplicable() ? monthRows.reduce((sum, row) => sum + row.notApplicable, 0) : 0
+        };
         Object.keys(totals).forEach(k => totals[k] += counts[k]);
         return { month, ...counts };
       });
       const chartMonthly = months.map(month => ({
         month,
-        Completed: chartRows.filter(row => row.month === month).reduce((sum, row) => sum + row.completed, 0),
-        Delay: chartRows.filter(row => row.month === month).reduce((sum, row) => sum + (row.delay || ((row.notDone || 0) + (row.missed || 0))), 0),
-        "Not Applicable": chartRows.filter(row => row.month === month).reduce((sum, row) => sum + (row.notApplicable || 0), 0)
+        Completed: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.completed, 0),
+        Delay: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.delay, 0)
       }));
       const chartCompletedTotal = chartMonthly.reduce((sum, row) => sum + row.Completed, 0);
       const chartDelayTotal = chartMonthly.reduce((sum, row) => sum + row.Delay, 0);
       const active = totals.Completed + totals.Delay + totals["Wait for Approval"];
-      document.getElementById("companyKpi").textContent = companyCount(rows);
+      document.getElementById("companyKpi").textContent = companyCount(companyRows);
       document.getElementById("trendDetail").classList.toggle("open", state.trendOpen);
       document.getElementById("chartCompletedTotal").textContent = chartCompletedTotal;
       document.getElementById("chartDelayTotal").textContent = chartDelayTotal;
@@ -904,6 +1390,11 @@
         : "conic-gradient(#d7dde5 0deg 360deg)";
       document.getElementById("statusDonut").classList.toggle("focus-complete", state.trendFocus === "complete");
       document.getElementById("statusDonut").classList.toggle("focus-delay", state.trendFocus === "delay");
+      document.getElementById("completeStatusButton").classList.toggle("active", state.trendFocus === "complete");
+      document.getElementById("completeStatusButton").classList.toggle("dimmed", state.trendFocus === "delay");
+      document.getElementById("delayStatusButton").classList.toggle("active", state.trendFocus === "delay");
+      document.getElementById("delayStatusButton").classList.toggle("dimmed", state.trendFocus === "complete");
+      document.getElementById("selectAllStatusButton").classList.toggle("active", !state.trendFocus);
       document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
       document.getElementById("donutAssignedLegend").textContent = active;
       document.getElementById("donutCompleteLegend").textContent = totals.Completed;
@@ -932,14 +1423,29 @@
           <div class="gantt-axis">Status</div>${monthAxis}
           ${ganttRow("Completed", "Completed", "complete", completeDim)}
           ${ganttRow("Delay", "Delay", "delay", delayDim)}
-          ${ganttRow("Not Applicable", "Not Applicable", "na", "")}
         </div>`;
 
-      renderDelayBreakdown(companyRows, months);
+      renderDelayBreakdown(statusRows, months);
       renderDurationTable(companyRows, months, "waitApproval", "waitApprovalTable");
       renderDurationTable(companyRows, months, "notApplicable", "notApplicableTable");
     }
     ["fromDate", "toDate"].forEach(id => document.getElementById(id).addEventListener("change", render));
+    document.getElementById("excelUpload").addEventListener("change", async event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!window.XLSX) {
+        document.getElementById("uploadStatus").textContent = "Excel reader failed to load. Check internet connection and refresh.";
+        return;
+      }
+      try {
+        document.getElementById("uploadStatus").textContent = "Reading uploaded Excel file...";
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
+        applyUploadedWorkbook(workbook, file.name);
+      } catch (error) {
+        document.getElementById("uploadStatus").textContent = `Upload failed: ${error.message}`;
+      }
+    });
+    document.getElementById("revertExcelButton").addEventListener("click", revertOriginalWorkbook);
     function navigateToCompanyBoxes() {
       state.trendOpen = true;
       render();
@@ -961,6 +1467,15 @@
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
+    function selectAllStatuses() {
+      state.trendFocus = null;
+      state.trendOpen = true;
+      render();
+      document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    document.getElementById("completeStatusButton").addEventListener("click", () => selectDonutSegment("complete"));
+    document.getElementById("delayStatusButton").addEventListener("click", () => selectDonutSegment("delay"));
+    document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.getElementById("statusDonut").addEventListener("click", event => {
       if (!state.donutActive) return;
       const rect = event.currentTarget.getBoundingClientRect();
