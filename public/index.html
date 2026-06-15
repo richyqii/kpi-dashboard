@@ -335,6 +335,11 @@
       align-items: center;
       padding: 17px;
     }
+    .status-donut-control {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
     .status-donut {
       width: 140px;
       height: 140px;
@@ -428,30 +433,6 @@
       align-items: center;
       color: #34445a;
       font-size: 13px;
-    }
-    button.status-donut-row {
-      cursor: pointer;
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 9px 10px;
-      background: #fff;
-      font: inherit;
-      text-align: left;
-      transition: border-color .18s ease, box-shadow .18s ease, opacity .18s ease;
-    }
-    button.status-donut-row:hover,
-    button.status-donut-row:focus {
-      outline: none;
-      border-color: #91abd0;
-      box-shadow: 0 4px 12px rgba(16,43,78,.06);
-    }
-    button.status-donut-row.active {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(36,85,141,.12);
-    }
-    button.status-donut-row.dimmed {
-      opacity: .46;
     }
     .status-donut-row strong {
       color: var(--ink);
@@ -640,6 +621,9 @@
       font-weight: 850;
       text-shadow: 0 1px 2px rgba(0,0,0,.25);
     }
+    .gantt-bar.active {
+      box-shadow: 0 0 0 3px rgba(36,85,141,.18);
+    }
     .gantt-bar.complete { background: var(--green); }
     .gantt-bar.delay { background: var(--red); }
     .gantt-bar.na {
@@ -796,11 +780,14 @@
           <div class="value" id="companyKpi">0</div>
         </div>
         <div class="card status-donut-card">
-          <div class="status-donut" id="statusDonut" role="button" tabindex="0" title="Click doughnut segment to select Complete or Delay">
-            <div class="status-donut-center">
-              <strong id="donutRate">0%</strong>
-              <span>Complete</span>
+          <div class="status-donut-control">
+            <div class="status-donut" id="statusDonut" role="button" tabindex="0" aria-label="Click doughnut segment to show Completed or Delay tasks in Monthly Status Trend" title="Click doughnut segment to show Completed or Delay tasks">
+              <div class="status-donut-center">
+                <strong id="donutRate">0%</strong>
+                <span>Complete</span>
+              </div>
             </div>
+            <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
           </div>
           <div class="completion-calc-box">
             <div class="completion-calc-label">Complete Rate Calculation</div>
@@ -810,15 +797,14 @@
           </div>
           <div class="status-donut-list">
             <div class="status-donut-row"><i class="dot" style="background:var(--blue)"></i><span>Total Assigned Tasks</span><strong id="donutAssignedLegend">0</strong></div>
-            <button type="button" class="status-donut-row" id="completeStatusButton"><i class="dot" style="background:var(--green)"></i><span>Completed Tasks</span><strong id="donutCompleteLegend">0</strong></button>
-            <button type="button" class="status-donut-row" id="delayStatusButton"><i class="dot" style="background:var(--red)"></i><span>Delay Tasks</span><strong id="donutDelayLegend">0</strong></button>
-            <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
+            <div class="status-donut-row"><i class="dot" style="background:var(--green)"></i><span>Completed Tasks</span><strong id="donutCompleteLegend">0</strong></div>
+            <div class="status-donut-row"><i class="dot" style="background:var(--red)"></i><span>Delay Tasks</span><strong id="donutDelayLegend">0</strong></div>
           </div>
         </div>
         <div class="card" id="approvalCard"><div class="label">Wait for Approval</div><div class="value" id="approvalKpi">0</div></div>
       </div>
       <div class="status-guidance">
-        Click <strong>Companies</strong> to open Monthly Status Trend and show all companies. Click <strong>Completed Tasks</strong> or <strong>Delay Tasks</strong> to view the completed or delay portion inside the Gantt chart, or click <strong>Select All</strong> to show all portions.
+        Click <strong>Companies</strong> to open Monthly Status Trend and show all companies. Click the <strong>Completed</strong> or <strong>Delay</strong> doughnut segment to show the full all-company Monthly Status Trend for that status, or click <strong>Select All</strong> to clear the highlight.
       </div>
     </section>
 
@@ -1382,18 +1368,18 @@
       document.getElementById("chartDelayTotal").textContent = chartDelayTotal;
       const completionRate = active ? totals.Completed / active * 100 : 0;
       const donutActive = totals.Completed + totals.Delay;
-      const donutDegrees = donutActive ? totals.Completed / donutActive * 360 : 0;
+      const donutGap = totals.Completed && totals.Delay ? 4 : 0;
+      const donutDegrees = donutActive ? totals.Completed / donutActive * (360 - donutGap * 2) : 0;
       state.donutDegrees = donutDegrees;
       state.donutActive = donutActive;
+      state.donutGap = donutGap;
       document.getElementById("statusDonut").style.background = donutActive
-        ? `conic-gradient(${colors.Completed} 0deg ${donutDegrees}deg, ${colors.Delay} ${donutDegrees}deg 360deg)`
+        ? totals.Completed && totals.Delay
+          ? `conic-gradient(#fff 0deg ${donutGap}deg, ${colors.Completed} ${donutGap}deg ${donutGap + donutDegrees}deg, #fff ${donutGap + donutDegrees}deg ${donutGap + donutDegrees + donutGap}deg, ${colors.Delay} ${donutGap + donutDegrees + donutGap}deg 360deg)`
+          : `conic-gradient(${totals.Completed ? colors.Completed : colors.Delay} 0deg 360deg)`
         : "conic-gradient(#d7dde5 0deg 360deg)";
       document.getElementById("statusDonut").classList.toggle("focus-complete", state.trendFocus === "complete");
       document.getElementById("statusDonut").classList.toggle("focus-delay", state.trendFocus === "delay");
-      document.getElementById("completeStatusButton").classList.toggle("active", state.trendFocus === "complete");
-      document.getElementById("completeStatusButton").classList.toggle("dimmed", state.trendFocus === "delay");
-      document.getElementById("delayStatusButton").classList.toggle("active", state.trendFocus === "delay");
-      document.getElementById("delayStatusButton").classList.toggle("dimmed", state.trendFocus === "complete");
       document.getElementById("selectAllStatusButton").classList.toggle("active", !state.trendFocus);
       document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
       document.getElementById("donutAssignedLegend").textContent = active;
@@ -1407,22 +1393,25 @@
       const completedMonths = monthly.filter(x => x.Delay === 0 && x["Wait for Approval"] === 0 && x.Completed > 0).length;
       const delayMonths = monthly.filter(x => x.Delay > 0 || x["Wait for Approval"] > 0).length;
 
-      const completeDim = state.trendFocus === "delay" ? " dimmed" : "";
-      const delayDim = state.trendFocus === "complete" ? " dimmed" : "";
       const monthAxis = chartMonthly.map(x => `<div class="gantt-axis">${chartMonthLabel(x.month)}</div>`).join("");
-      const ganttRow = (label, key, className, dimClass) =>
+      const ganttRow = (label, key, className, focus) =>
         `<div class="gantt-row-label">${label}</div>` +
         chartMonthly.map(x => {
           const count = x[key];
           const empty = count ? "" : " empty";
-          const dimmed = count ? dimClass : "";
-          return `<div class="gantt-cell"><div class="gantt-bar ${className}${empty}${dimmed}" title="${chartMonthLabel(x.month)} ${label.toLowerCase()}: ${count}">${count || ""}</div></div>`;
+          const activeBar = count && state.trendFocus === focus ? " active" : "";
+          return `<div class="gantt-cell"><div class="gantt-bar ${className}${empty}${activeBar}" title="${chartMonthLabel(x.month)} ${label.toLowerCase()}: ${count}">${count || ""}</div></div>`;
         }).join("");
+      const trendRows = state.trendFocus === "complete"
+        ? ganttRow("Completed", "Completed", "complete", "complete")
+        : state.trendFocus === "delay"
+          ? ganttRow("Delay", "Delay", "delay", "delay")
+          : `${ganttRow("Completed", "Completed", "complete", "complete")}
+          ${ganttRow("Delay", "Delay", "delay", "delay")}`;
       document.getElementById("chart").innerHTML =
         `<div class="gantt-grid" style="--month-count:${Math.max(chartMonthly.length, 1)}">
           <div class="gantt-axis">Status</div>${monthAxis}
-          ${ganttRow("Completed", "Completed", "complete", completeDim)}
-          ${ganttRow("Delay", "Delay", "delay", delayDim)}
+          ${trendRows}
         </div>`;
 
       renderDelayBreakdown(statusRows, months);
@@ -1460,9 +1449,10 @@
       event.preventDefault();
       navigateToCompanyBoxes();
     });
-    function selectDonutSegment(focus) {
-      if (!state.donutActive) return;
+    function selectTrendStatus(focus) {
       state.trendFocus = state.trendFocus === focus ? null : focus;
+      state.detailCompany = "All Companies";
+      state.company = "All Companies";
       state.trendOpen = true;
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -1473,8 +1463,6 @@
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-    document.getElementById("completeStatusButton").addEventListener("click", () => selectDonutSegment("complete"));
-    document.getElementById("delayStatusButton").addEventListener("click", () => selectDonutSegment("delay"));
     document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.getElementById("statusDonut").addEventListener("click", event => {
       if (!state.donutActive) return;
@@ -1482,16 +1470,16 @@
       const x = event.clientX - (rect.left + rect.width / 2);
       const y = event.clientY - (rect.top + rect.height / 2);
       const angle = (Math.atan2(y, x) * 180 / Math.PI + 90 + 360) % 360;
-      selectDonutSegment(angle <= state.donutDegrees ? "complete" : "delay");
+      selectTrendStatus(angle <= state.donutGap + state.donutDegrees ? "complete" : "delay");
     });
     document.getElementById("statusDonut").addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault();
-        selectDonutSegment("complete");
+        selectTrendStatus("complete");
       }
       if (event.key === " ") {
         event.preventDefault();
-        selectDonutSegment("delay");
+        selectTrendStatus("delay");
       }
     });
     document.getElementById("companyBoxList").addEventListener("click", event => {
