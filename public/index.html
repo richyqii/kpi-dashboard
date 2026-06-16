@@ -818,6 +818,7 @@
           <div class="legend">
             <span><i class="dot" style="background:var(--green)"></i>Completed</span>
             <span><i class="dot" style="background:var(--red)"></i>Delay</span>
+            <span><i class="dot" style="background:var(--gray)"></i>N/A</span>
           </div>
           <div class="chart-tools">
             <div class="chart-total"><span>Total completed tasks</span><strong id="chartCompletedTotal">0</strong></div>
@@ -1079,17 +1080,69 @@
         row.pic === "IZA" &&
         row.company === "GMAX ENGINEERING SDN BHD";
     }
+    function isIzaPayrollGmaxNotApplicableOverride(row) {
+      return isIzaPayrollGmaxStartCondition(row) &&
+        row.month >= "2025-01" &&
+        row.month <= "2025-12";
+    }
+    function isPayrollLingYinNotApplicableOverride(row) {
+      if (row.service !== "Payroll" || row.pic !== "LING YIN") return false;
+      return (row.company === "CORPS OF PROGIDIES CONSULTANCY SDN BHD" && row.month >= "2025-09") ||
+        (row.company === "KILANG SERBOK KOPI KIM GUAN" && row.month >= "2026-01");
+    }
+    function isPayrollJiaWenThreeCompanyOverride(row) {
+      return row.service === "Payroll" &&
+        row.pic === "JIA WEN" &&
+        ["MAKMUR STEEL E-PCB", "MAKMUR STEEL ENGINEERING SDN BHD", "ORIENTSYS TECHNOLOGY SDN BHD"].includes(row.company);
+    }
+    function applyPayrollStatusOverride(row, group) {
+      if (isIzaPayrollGmaxNotApplicableOverride(row) || isPayrollLingYinNotApplicableOverride(row)) {
+        group.notApplicable += Math.max(row.notApplicable || 0, 1);
+        return true;
+      }
+      if (!isPayrollJiaWenThreeCompanyOverride(row)) return false;
+      if (row.company === "MAKMUR STEEL ENGINEERING SDN BHD") {
+        if (row.month >= "2025-10" && row.month <= "2025-12") {
+          group.completed = Math.max(group.completed, 1);
+        } else if (row.month > "2025-12") {
+          group.delay = Math.max(group.delay, 1);
+        } else {
+          group.notApplicable = Math.max(group.notApplicable, 1);
+        }
+        return true;
+      }
+      if (row.company === "MAKMUR STEEL E-PCB") {
+        if (row.month > "2026-04") {
+          group.delay = Math.max(group.delay, 1);
+        } else {
+          group.notApplicable = Math.max(group.notApplicable, 1);
+        }
+        return true;
+      }
+      if (row.company === "ORIENTSYS TECHNOLOGY SDN BHD") {
+        if (row.month >= "2025-11" && row.month <= "2026-01") {
+          group.completed = Math.max(group.completed, 1);
+        } else if (row.month > "2026-01") {
+          group.delay = Math.max(group.delay, 1);
+        } else {
+          group.notApplicable = Math.max(group.notApplicable, 1);
+        }
+        return true;
+      }
+      return false;
+    }
     function rollupCompanyMonthStatus(rows, months) {
       const selectedMonths = new Set(months);
       const groups = {};
       rows.forEach(row => {
         if (!selectedMonths.has(row.month)) return;
         const applyGmaxStartRule = isIzaPayrollGmaxStartCondition(row);
-        if (applyGmaxStartRule && row.month < "2026-01") return;
         const key = `${row.company}|${row.month}`;
         if (!groups[key]) {
           groups[key] = { company: row.company, month: row.month, completed: 0, delay: 0, waitApproval: 0, notApplicable: 0 };
         }
+        if (applyPayrollStatusOverride(row, groups[key])) return;
+        if (applyGmaxStartRule && row.month < "2026-01") return;
         groups[key].completed += row.completed || 0;
         groups[key].delay += applyGmaxStartRule && row.month <= "2026-04" ? 0 : row.delay || ((row.notDone || 0) + (row.missed || 0));
         groups[key].waitApproval += row.waitApproval || 0;
@@ -1357,7 +1410,8 @@
       const chartMonthly = months.map(month => ({
         month,
         Completed: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.completed, 0),
-        Delay: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.delay, 0)
+        Delay: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.delay, 0),
+        "Not Applicable": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notApplicable, 0)
       }));
       const chartCompletedTotal = chartMonthly.reduce((sum, row) => sum + row.Completed, 0);
       const chartDelayTotal = chartMonthly.reduce((sum, row) => sum + row.Delay, 0);
@@ -1407,7 +1461,8 @@
         : state.trendFocus === "delay"
           ? ganttRow("Delay", "Delay", "delay", "delay")
           : `${ganttRow("Completed", "Completed", "complete", "complete")}
-          ${ganttRow("Delay", "Delay", "delay", "delay")}`;
+          ${ganttRow("Delay", "Delay", "delay", "delay")}
+          ${ganttRow("N/A", "Not Applicable", "na", "na")}`;
       document.getElementById("chart").innerHTML =
         `<div class="gantt-grid" style="--month-count:${Math.max(chartMonthly.length, 1)}">
           <div class="gantt-axis">Status</div>${monthAxis}
@@ -1416,7 +1471,7 @@
 
       renderDelayBreakdown(statusRows, months);
       renderDurationTable(companyRows, months, "waitApproval", "waitApprovalTable");
-      renderDurationTable(companyRows, months, "notApplicable", "notApplicableTable");
+      renderDurationTable(statusRows, months, "notApplicable", "notApplicableTable");
     }
     ["fromDate", "toDate"].forEach(id => document.getElementById(id).addEventListener("change", render));
     document.getElementById("excelUpload").addEventListener("change", async event => {
