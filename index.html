@@ -350,14 +350,7 @@
       border-radius: 50%;
       background: conic-gradient(var(--green) 0deg, var(--green) 0deg, var(--red) 0deg 360deg);
       position: relative;
-      cursor: pointer;
-      transition: box-shadow .18s ease, transform .18s ease;
-    }
-    .status-donut:hover,
-    .status-donut:focus {
-      outline: none;
-      box-shadow: 0 8px 24px rgba(16,43,78,.12);
-      transform: translateY(-1px);
+      cursor: default;
     }
     .status-donut.focus-complete {
       box-shadow: 0 0 0 4px rgba(25,164,119,.18);
@@ -771,35 +764,37 @@
         </div>
       </div>
       <div class="status-metrics">
-        <div class="card clickable-card" id="companyKpiCard" role="button" tabindex="0" title="Go to company selection">
-          <div class="label">Companies</div>
-          <div class="value" id="companyKpi">0</div>
-        </div>
+
         <div class="card status-donut-card">
           <div class="status-donut-control">
-            <div class="status-donut" id="statusDonut" role="button" tabindex="0" aria-label="Overall status chart. Use the status buttons to filter Monthly Status Trend" title="Click a status segment to filter monthly tasks">
+            <div class="status-donut" id="statusDonut" role="img" aria-label="Overall status chart and completion rate">
               <div class="status-donut-center">
                 <strong id="donutRate">0%</strong>
-                <span>Task Done</span>
+                <span>Completion<br>Rate</span>
               </div>
             </div>
             <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
           </div>
-          <div class="completion-calc-box">
+          <details class="completion-calc-box"><summary>Completion rate calculation</summary>
             <div class="completion-calc-label">Complete Rate Calculation</div>
             <div class="completion-calc-formula">Task Done / (Task Done + Delay Task + Wait for Approval)</div>
             <div class="completion-calc-values" id="completionCalcValues">0 / (0 + 0 + 0)</div>
             <div class="completion-calc-result" id="completionCalcResult">= 0.0%</div>
-          </div>
+          </details>
           <div class="status-summary">
-            <div class="assigned-summary"><span>Total Assigned Tasks</span><strong id="donutAssignedLegend">0</strong><small>Percentages below are shares of assigned tasks.</small></div>
+            <div class="assigned-summary"><span>Total Assigned Tasks</span><strong id="donutAssignedLegend">0</strong><small>Card percentages are shares of assigned tasks.</small></div>
             <div class="status-summary-cards"><button type="button" class="status-summary-card complete status-filter" data-status="complete"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12l4 4 8-8"/></svg></span><span>Task Done</span></span><strong id="donutCompleteLegend">0</strong><span class="status-card-percent" id="completeShare">0.0%</span></button><button type="button" class="status-summary-card delay status-filter" data-status="delay"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v6m0 4h.01M3 20 12 3l9 17H3Z"/></svg></span><span>Delay Task</span></span><strong id="donutDelayLegend">0</strong><span class="status-card-percent" id="delayShare">0.0%</span></button><button type="button" class="status-summary-card approval status-filter" data-status="approval"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span><span>Wait for Approval</span></span><strong id="donutApprovalLegend">0</strong><span class="status-card-percent" id="approvalShare">0.0%</span></button><button type="button" class="status-summary-card na status-filter" data-status="na"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12"/></svg></span><span>Not Applicable</span></span><strong id="donutNaLegend">0</strong><span class="status-card-percent" id="naShare">0.0%</span></button></div>
           </div>
+        <div class="clickable-card company-count" id="companyKpiCard" role="button" tabindex="0" title="Go to company selection">
+          <div class="label">Total Companies</div>
+          <div class="value" id="companyKpi">0</div>
+        </div>
+
         </div>
       </div>
       <div class="status-guidance">
         <span>✔ or Closing: <strong>Task Done</strong> · Dashes: <strong>Not Applicable</strong> · Blank box: <strong>Delay Task</strong> · Colored box: <strong>Wait for Approval</strong>.</span>
-        <span>Click a status segment or label to filter the Monthly Status Trend. <strong>Select All</strong> shows all four statuses. Not Applicable is excluded from the completion rate.</span>
+        <span>Click a status card to filter the Monthly Status Trend. <strong>Select All</strong> shows all four statuses. Not Applicable is excluded from the completion rate.</span>
       </div>
     </section>
 
@@ -860,24 +855,19 @@
       </table>
     </section>
 
-    <section class="panel service-rate-panel">
-      <h2>Service Rate Trend by PIC</h2>
-      <div class="sub">Percentage by service for completed and delay tasks in the selected month range.</div>
-      <div class="service-rate-grid">
-        <div class="rate-chart-card">
-          <div class="rate-chart-title">Completed Task Completion Rate</div>
-          <div class="rate-chart-body">
-            <div class="rate-chart" id="completedRateChart"></div>
-            <div class="rate-legend" id="completedRateLegend"></div>
-          </div>
-        </div>
-        <div class="rate-chart-card">
-          <div class="rate-chart-title">Delay Task Rate</div>
-          <div class="rate-chart-body">
-            <div class="rate-chart" id="delayRateChart"></div>
-            <div class="rate-legend" id="delayRateLegend"></div>
-          </div>
-        </div>
+    <section class="breakdown-section" aria-label="Service and company overview">
+      <p class="sub breakdown-scope">Selected month range &middot; All PICs &middot; Main Reviewer &middot; Billed E-Invoice</p>
+      <div class="breakdown-grid">
+        <section class="panel service-breakdown-panel">
+          <div class="breakdown-head"><h2>Service Breakdown</h2><select id="breakdownMetric" aria-label="Service breakdown metric"><option value="completed">By Completion Rate</option><option value="delay">By Delay Rate</option></select></div>
+          <div id="serviceBreakdown"></div>
+          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>Task Done</span><span><i style="background:var(--red)"></i>Delay Task</span><span><i style="background:#eab308"></i>Wait for Approval</span><span><i style="background:#95a1b2"></i>Not Applicable</span><span><i style="background:#e8edf3"></i>Not due yet</span></div>
+          <p class="sub">Rates exclude Not Applicable and tasks not due yet.</p>
+        </section>
+        <section class="panel company-delay-panel">
+          <div class="breakdown-head"><h2>Company Delay Summary</h2><select id="delayLimit" aria-label="Company delay limit"><option value="5">Top 5 Companies</option><option value="10">Top 10 Companies</option><option value="all">All Companies</option></select></div>
+          <div class="delay-table-wrap"><table><thead><tr><th>Company</th><th>Service</th><th>Delay Tasks</th></tr></thead><tbody id="companyDelaySummary"></tbody></table></div>
+        </section>
       </div>
     </section>
   </main>
@@ -1029,77 +1019,36 @@
       });
       return [...groups.values()];
     }
-    function servicePicRows(service, pic) {
-      return activeDashboardCompanyData.filter(row =>
-        row.service === service &&
-        row.pic === pic.toUpperCase() &&
-        row.role === "Main" &&
-        (service !== "E-Invoice" || row.invoiceType === "Billed")
-      );
-    }
-    function servicePicRates(months) {
-      return pics.map(pic => ({
-        pic,
-        color: picColors[pic] || "#475569",
-        points: services.map(service => {
-          const rows = rollupCompanyMonthStatus(servicePicRows(service, pic), months);
-          const completed = rows.reduce((sum, row) => sum + row.completed, 0);
-          const delay = rows.reduce((sum, row) => sum + row.delay, 0);
-          const waitApproval = rows.reduce((sum, row) => sum + row.waitApproval, 0);
-          const active = completed + delay + waitApproval;
-          return {
-            service,
-            completedRate: active ? completed / active * 100 : null,
-            delayRate: active ? delay / active * 100 : null
-          };
-        })
-      }));
-    }
-    function renderRateChart(chartId, legendId, series, key) {
-      const width = 520;
-      const height = 260;
-      const pad = { left: 42, right: 78, top: 18, bottom: 45 };
-      const plotWidth = width - pad.left - pad.right;
-      const plotHeight = height - pad.top - pad.bottom;
-      const xFor = index => pad.left + (services.length === 1 ? 0 : index * (plotWidth / (services.length - 1)));
-      const yFor = value => pad.top + (100 - value) / 100 * plotHeight;
-      const yTicks = [0, 50, 100];
-      const grid = yTicks.map(tick => {
-        const y = yFor(tick);
-        return `<line class="rate-grid-line" x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}"></line><text class="rate-axis" x="8" y="${y + 4}">${tick}%</text>`;
+    function renderServiceBreakdown(months) {
+      const selectedMonths = new Set(months);
+      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month) && row.role === "Main" && (row.service !== "E-Invoice" || row.invoiceType === "Billed"));
+      const keys = ["completed", "delay", "waitApproval", "notApplicable", "notDue"];
+      const labels = ["Task Done", "Delay Task", "Wait for Approval", "Not Applicable", "Not due yet"];
+      const fills = ["#19a477", "#df5a62", "#eab308", "#95a1b2", "#e8edf3"];
+      const metric = document.getElementById("breakdownMetric").value;
+      document.getElementById("serviceBreakdown").innerHTML = services.map(service => {
+        const counts = Object.fromEntries(keys.map(key => [key, 0]));
+        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row); if (status in counts) counts[status]++; });
+        const total = keys.reduce((sum, key) => sum + counts[key], 0);
+        const active = counts.completed + counts.delay + counts.waitApproval;
+        const rate = active ? (counts[metric] / active * 100).toFixed(1) + "%" : "?";
+        const description = labels.map((label, i) => label + ": " + counts[keys[i]]).join(", ");
+        const segments = keys.map((key, i) => '<span style="width:' + (total ? counts[key] / total * 100 : 0) + '%;background:' + fills[i] + '" title="' + labels[i] + ': ' + counts[key] + '"></span>').join("");
+        return '<div class="service-breakdown-row"><strong>' + escapeHtml(service) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(service + '. ' + description) + '">' + segments + '</div><strong class="service-breakdown-rate">' + rate + '</strong></div>';
       }).join("");
-      const xLabels = services.map((service, index) =>
-        `<text class="rate-axis" x="${xFor(index)}" y="${height - 16}" text-anchor="middle">${escapeHtml(service)}</text>`
-      ).join("");
-      const lines = series.map(row => {
-        const points = row.points
-          .map((point, index) => point[key] == null ? null : { x: xFor(index), y: yFor(point[key]), value: point[key] })
-          .filter(Boolean);
-        if (!points.length) return "";
-        const polyline = points.map(point => `${point.x},${point.y}`).join(" ");
-        const pointDots = points.map(point =>
-          `<circle class="rate-point" cx="${point.x}" cy="${point.y}" r="4" fill="${row.color}"><title>${escapeHtml(row.pic)} ${point.value.toFixed(1)}%</title></circle>`
-        ).join("");
-        const last = points[points.length - 1];
-        return `<polyline class="rate-line" points="${polyline}" stroke="${row.color}"></polyline>${pointDots}<text class="rate-annotation" x="${last.x + 8}" y="${last.y + 4}" fill="${row.color}">${escapeHtml(row.pic)}</text>`;
-      }).join("");
-      document.getElementById(chartId).innerHTML =
-        `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${chartId}">
-          ${grid}
-          <line class="rate-grid-line" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
-          <line class="rate-grid-line" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
-          ${xLabels}
-          ${lines}
-        </svg>`;
-      document.getElementById(legendId).innerHTML = series.map(row =>
-        `<div class="rate-legend-row"><span class="rate-legend-swatch" style="background:${row.color}"></span><span>${escapeHtml(row.pic)}</span></div>`
-      ).join("");
+      const companies = new Map();
+      rows.forEach(row => {
+        if (KpiCore.effectiveStatus(row) !== "delay") return;
+        if (!companies.has(row.company)) companies.set(row.company, { company: row.company, services: new Set(), count: 0 });
+        const entry = companies.get(row.company); entry.count++; entry.services.add(row.service);
+      });
+      const ranked = [...companies.values()].sort((a, b) => b.count - a.count || a.company.localeCompare(b.company));
+      const limit = document.getElementById("delayLimit").value;
+      const visible = limit === "all" ? ranked : ranked.slice(0, Number(limit));
+      document.getElementById("companyDelaySummary").innerHTML = visible.length ? visible.map(row => '<tr><td>' + escapeHtml(row.company) + '</td><td>' + escapeHtml([...row.services].sort().join(", ")) + '</td><td class="delay-task-count">' + row.count + '</td></tr>').join("") : '<tr><td colspan="3">No delayed tasks in the selected month range.</td></tr>';
     }
-    function renderServiceRateCharts(months) {
-      const series = servicePicRates(months);
-      renderRateChart("completedRateChart", "completedRateLegend", series, "completedRate");
-      renderRateChart("delayRateChart", "delayRateLegend", series, "delayRate");
-    }
+    document.getElementById("breakdownMetric").addEventListener("change", render);
+    document.getElementById("delayLimit").addEventListener("change", render);
     function applySavedDataset(rows, fileName) {
       activeDashboardCompanyData = rows;
       activeDashboardData = KpiWorkbook.summarize(rows);
@@ -1138,7 +1087,7 @@
       document.getElementById("dateSummary").textContent = `* Check the works until ${monthLabel(effectiveTo)}.`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
-      renderServiceRateCharts(months);
+      renderServiceBreakdown(months);
       const companyRows = filteredCompanyRows();
       buildCompanyBoxes(companyRows);
       const chartRows = state.detailCompany === "All Companies"
@@ -1258,21 +1207,6 @@
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
-    document.getElementById("statusDonut").addEventListener("click", event => {
-      if (!state.donutSegments.length) return;
-      const rect = event.currentTarget.getBoundingClientRect();
-      const x = event.clientX - (rect.left + rect.width / 2);
-      const y = event.clientY - (rect.top + rect.height / 2);
-      const angle = (Math.atan2(y, x) * 180 / Math.PI + 90 + 360) % 360;
-      const segment = state.donutSegments.find(segment => angle >= segment.start && angle < segment.end);
-      if (segment) selectTrendStatus(segment.focus);
-    });
-    document.getElementById("statusDonut").addEventListener("keydown", event => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        selectAllStatuses();
-      }
-    });
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
     document.getElementById("companyBoxList").addEventListener("click", event => {
       const button = event.target.closest(".company-box");

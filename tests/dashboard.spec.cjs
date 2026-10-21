@@ -97,3 +97,25 @@ test('month boundaries, empty reviewer selection, and mobile layout remain usabl
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: '.tools/dashboard-mobile.png', fullPage: true });
 });
+
+test('service breakdown and company delays reconcile to saved workbook', async ({ page }) => {
+  await fullRange(page);
+  const scoped = rows.filter(row => row.role === 'Main' && (row.service !== 'E-Invoice' || row.invoiceType === 'Billed'));
+  for (const [i, service] of ['Accounting', 'Payroll', 'E-Invoice', 'SST'].entries()) {
+    const records = scoped.filter(row => row.service === service);
+    const done = records.reduce((n, r) => n + r.completed, 0);
+    const delay = records.reduce((n, r) => n + r.delay, 0);
+    const approval = records.reduce((n, r) => n + r.waitApproval, 0);
+    const rate = done + delay + approval ? (done / (done + delay + approval) * 100).toFixed(1) + '%' : '—';
+    await expect(page.locator('.service-breakdown-rate').nth(i)).toHaveText(rate);
+  }
+  const companies = new Map();
+  for (const row of scoped) if (row.delay) companies.set(row.company, (companies.get(row.company) || 0) + row.delay);
+  const ranked = [...companies].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  await expect(page.locator('#companyDelaySummary tr')).toHaveCount(Math.min(5, ranked.length));
+  await page.locator('#delayLimit').selectOption('all');
+  await expect(page.locator('#companyDelaySummary tr')).toHaveCount(ranked.length);
+  await expect(page.locator('#companyDelaySummary .delay-task-count')).toHaveText(ranked.map(row => String(row[1])));
+  await page.locator('#breakdownMetric').selectOption('delay');
+  await expect(page.locator('#serviceBreakdown .service-breakdown-row')).toHaveCount(4);
+});
