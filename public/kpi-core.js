@@ -11,6 +11,23 @@
   const monthNow = (date = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit' }).formatToParts(date).reduce((out, part) => ({ ...out, [part.type]: part.value }), {});
   function currentMonth(date) { const parts = monthNow(date); return `${parts.year}-${parts.month}`; }
   const rawStatus = row => row.waitApproval === 1 ? 'delay' : Kpi.statusKeys.find(key => row[key] === 1);
+  // Stored, time-independent completion vocabulary used by the Step 3 review:
+  // completed = PIC Completed, notApplicable = Boss Completed, delay/blank = Incomplete.
+  // Never display "Delayed" or "Not Yet Due" here — those depend on the cutoff month,
+  // and the passage of time is not an Excel data change.
+  const storedStatusText = row => !row ? '—' : rawStatus(row) === 'completed' ? 'PIC Completed' : rawStatus(row) === 'notApplicable' ? 'Boss Completed' : 'Incomplete';
+  // Classify a status transition between the same task-month. Boss Completed is
+  // never PIC work: boss→PICCompleted stays attribution, not a personally
+  // completed count; the PIC is attributed only when the workbook proves who
+  // completed the task (assigned PIC initials/tick).
+  function completionChangeKind(oldStatus, nextStatus) {
+    if (oldStatus === nextStatus || !nextStatus || !oldStatus) return null;
+    if (nextStatus === 'completed' && oldStatus !== 'completed') return oldStatus === 'notApplicable' || oldStatus === 'waitApproval' ? { bucket: 'attribution', label: 'Boss Completed → PIC Completed' } : { bucket: 'new', label: 'Incomplete → PIC Completed' };
+    if (oldStatus === 'completed' && nextStatus === 'notApplicable') return { bucket: 'attribution', label: 'PIC Completed → Boss Completed' };
+    if (oldStatus === 'completed') return { bucket: 'reversed', label: 'PIC Completed → Incomplete' };
+    if (oldStatus === 'notApplicable' && nextStatus === 'delay') return { bucket: 'other', label: 'Boss Completed → Incomplete' };
+    return { bucket: 'other', label: 'Other completion status change' };
+  }
   let deadlines = {};
   function setDeadlines(value) { deadlines = { ...value }; }
   function currentDate(date = new Date()) { return new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Singapore', year:'numeric',month:'2-digit',day:'2-digit'}).format(date); }
@@ -189,6 +206,22 @@
     const unmatchedOld = previous.filter(old => !used.has(old.key));
     const unmatchedNew = incoming.filter(next => !matches.has(next.key));
     const mappingOptions = unmatchedNew.map(next => ({ key: next.key, company: next.company, pic: next.pic, role: next.role, service: next.service, task: taskName(next), options: unmatchedOld.filter(old => old.service === next.service && taskName(old) === taskName(next)).map(old => ({ key: old.key, company: old.company, pic: old.pic, role: old.role })) })).filter(next => next.options.length);
+    // Company-level membership uses the full old and new datasets. Normalized
+    // (NFKC/trim/collapse/upper) per service so spacing or case is not a change,
+    // while genuinely different names are never merged. Reassignments keep the
+    // company and never register as company additions or removals.
+    const companyKey = row => JSON.stringify([row.service, normalized(row.company)]);
+    const names = new Map();
+    for (const row of [...(oldRows || []), ...input]) {
+      const key = companyKey(row);
+      if (!names.has(key)) names.set(key, { service: row.service, company: row.company });
+    }
+    const oldCompanies = oldRows?.length ? new Set(oldRows.map(companyKey)) : null;
+    const newCompanies = new Set(input.map(companyKey));
+    const companyChanges = oldCompanies ? {
+      added: [...newCompanies].filter(key => !oldCompanies.has(key)).map(key => names.get(key)).sort((a, b) => a.company.localeCompare(b.company)),
+      removed: [...oldCompanies].filter(key => !newCompanies.has(key)).map(key => names.get(key)).sort((a, b) => a.company.localeCompare(b.company))
+    } : { added: [], removed: [] };
     const changes = [], output = [];
     const add = (category, kind, old, next, id) => changes.push({ category, kind, recordId: `${id}|${(next || old).month}`, old: compact(old), next: compact(next) });
     const compact = row => row ? { pic: row.pic, company: row.company, service: row.service, role: row.role, month: row.month, task: taskName(row), status: rawStatus(row), displayStatus: statusLabel(row, asOf) } : null;
@@ -210,7 +243,7 @@
     }
     for (const old of unmatchedOld) old.rows.forEach(row => add('Assignment Changes', 'Task removed', row, null, old.assignmentId || old.key));
     changes.sort((a, b) => JSON.stringify([a.category, (a.next || a.old).service, (a.next || a.old).company, (a.next || a.old).month]).localeCompare(JSON.stringify([b.category, (b.next || b.old).service, (b.next || b.old).company, (b.next || b.old).month])));
-    return { rows: output, changes, mappingOptions, firstImport: !oldRows?.length, counts: Object.fromEntries(['Status Changes', 'Assignment Changes', 'Monthly Updates'].map(category => [category, changes.filter(change => change.category === category).length])), changedRecords: new Set(changes.map(change => change.recordId)).size };
+    return { rows: output, changes, mappingOptions, firstImport: !oldRows?.length, counts: Object.fromEntries(['Status Changes', 'Assignment Changes', 'Monthly Updates'].map(category => [category, changes.filter(change => change.category === category).length])), changedRecords: new Set(changes.map(change => change.recordId)).size, companyChanges };
   }
-  return { setDeadlines, currentDate, services, clean, label, rawStatus, statusLabel, effectiveStatus, currentMonth, taskName, identityKey, validateRows, validateWorkbook, compare };
+  return { setDeadlines, currentDate, services, clean, label, rawStatus, statusLabel, effectiveStatus, currentMonth, taskName, identityKey, storedStatusText, completionChangeKind, validateRows, validateWorkbook, compare };
 });

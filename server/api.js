@@ -37,11 +37,14 @@ async function draftResult(env, draft) {
 }
 async function saveDraft(env, active, fileName, input, kind = 'upload', restoredFrom = null) {
   const result = Core.compare(active?.id ? JSON.parse(active.rows_json) : null, input);
+  const removedCompanies = result.companyChanges?.removed || [];
+  const warnings = [];
+  if (removedCompanies.length) warnings.push(`Warning: ${removedCompanies.length} company record${removedCompanies.length === 1 ? '' : 's'} (${removedCompanies.slice(0, 5).map(item => `${item.service}: ${item.company}`).join('; ')}${removedCompanies.length > 5 ? '; …' : ''}) no longer exist in the uploaded document. Approving will delete these saved records.`);
   const draft = { id: id(), baseId: active?.id || null, fileName, createdAt: now(), expiresAt: Date.now() + 3600000, kind, restoredFrom };
   sizeCheck({ input, result });
   await query(env, 'DELETE FROM kpi_drafts WHERE expires_at < ?', Date.now()).run();
   await query(env, 'INSERT INTO kpi_drafts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', draft.id, draft.baseId, fileName, draft.createdAt, draft.expiresAt, kind, restoredFrom, JSON.stringify(input), JSON.stringify(result)).run();
-  return { ...draft, ...result, rows: undefined };
+  return { ...draft, ...result, warnings: [...warnings, ...(result.warnings || [])], rows: undefined };
 }
 export async function api(request, env) {
   const url = new URL(request.url), route = url.pathname;
@@ -148,7 +151,7 @@ export async function api(request, env) {
         const switched = await query(env, 'UPDATE kpi_state SET current_id = ? WHERE id = 1 AND current_id IS ? AND EXISTS (SELECT 1 FROM kpi_versions WHERE id = ?)', target.id, draft.base_id, target.id).run();
         if (!switched.meta.changes && (await current(env))?.id !== target.id) fail(409, 'The baseline changed while you were reviewing. Select the version again.');
         const result = JSON.parse(draft.result_json);
-        return json({ version: { ...metadata(target), summary: summary(result) }, rows: JSON.parse(target.rows_json), changes: result.changes });
+        return json({ version: { ...metadata(target), summary: summary(result) }, rows: JSON.parse(target.rows_json), changes: result.changes, companyChanges: result.companyChanges });
       }
       await draftResult(env, draft);
       const result = JSON.parse(draft.result_json);

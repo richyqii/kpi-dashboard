@@ -67,40 +67,65 @@
     return `<div class="workflow-summary">${Object.entries(result.counts || {}).filter(([, count]) => count > 0).map(([name, count]) => `<div>${escape(name)}<strong>${count}</strong></div>`).join('')}</div>`;
   }
   function simpleSummary(result) {
-    const descriptions = {
-      'Status Changes': 'Updates to PIC completion, boss completion or empty tasks.',
-      'Assignment Changes': 'Changes to PIC, company or role, including added and removed tasks.',
-      'Monthly Updates': 'A month’s record was added or removed for an existing task.'
-    };
     const status = row => escape(row?.displayStatus || KpiCore.label[row?.status] || '—');
-    const cards = Object.entries(descriptions).map(([category, description]) => {
-      const items = result.changes.filter(change => change.category === category);
-      if (!items.length) return '';
-      const example = items.find(change => change.old && change.next) || items[0];
-      let detail = '<p class="workflow-note">No changes in this category.</p>';
-      if (example) {
-        const row = example.next || example.old;
-        let changeText = escape(example.kind);
-        if (category === 'Status Changes') changeText = `<span class="change-status ${escape(example.old.status)}">${status(example.old)}</span> → <span class="change-status ${escape(example.next.status)}">${status(example.next)}</span>`;
-        else if (example.old && example.next) changeText = ['pic', 'company', 'service', 'role'].filter(key => example.old[key] !== example.next[key]).map(key => `${{ pic: 'PIC', company: 'Company', service: 'Service', role: 'Role' }[key]}: ${escape(example.old[key])} → <strong>${escape(example.next[key])}</strong>`).join('<br>');
-        detail = `<div class="change-example"><p class="workflow-note">Example: ${escape(row.company)} · ${escape(row.service)} · ${escape(row.month)}</p><p>${escape(row.pic)} · ${escape(row.role)} Reviewer</p><p>${changeText}</p></div>`;
-      }
-      return `<article class="change-card"><h4>${escape(category)}<span>${items.length}</span></h4><p class="workflow-note">${description}</p>${detail}</article>`;
-    }).join('');
-    return `<div class="change-total"><strong>${result.changedRecords}</strong><span>Monthly records affected</span></div><h3 class="change-summary-title">Changes Summary</h3><div class="change-cards">${cards}</div>`;
+    const fmtMonth = value => {
+      const month = String(value || '');
+      if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(month)) return escape(month);
+      return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'][Number(month.slice(5)) - 1] + ' ' + month.slice(0, 4);
+    };
+    const ico = path => `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${path}"/></svg>`;
+    const icons = {
+      company: ico('M4 21V3h9v4h7v14H4zm2-2h2v-2H6v2zm0-4h2v-2H6v2zm0-4h2V9H6v2zm5 8h2v-2h-2v2zm0-4h2v-2h-2v2zm0-4h2V9h-2v2zm5 8h3V9h-3v10z'),
+      period: ico('M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z'),
+      completion: ico('M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.4L6.6 12.2l1.4-1.4 2.8 2.8 6-6 1.4 1.4z')
+    };
+    const group = name => result.changes.filter(change => change.category === name);
+    const assignment = group('Assignment Changes'), period = group('Monthly Updates'), completion = group('Status Changes');
+    const monthsOf = list => list.map(change => (change.old || change.next)?.month).filter(Boolean).sort();
+    const span = list => {
+      const months = monthsOf(list);
+      return months.length ? `${fmtMonth(months[0])} to ${fmtMonth(months[months.length - 1])}` : '';
+    };
+    const cards = [
+      { count: assignment.length, label: 'Company Changes (add/remove)', desc: 'Companies with tasks added or removed compared with the current baseline.', note: '', icon: icons.company },
+      { count: period.length, label: 'Period Changes', desc: 'Reporting months added or removed compared with the current baseline.', note: span(period) ? `${span(period)}` : '', icon: icons.period },
+      { count: completion.length, label: 'PIC Completion Changes', desc: 'PIC completion quantity changed compared with the current baseline.', note: '', icon: icons.completion }
+    ];
+    const exampleItem = (title, icon, list, render) => {
+      if (!list.length) return '';
+      const example = list.find(change => change.old && change.next) || list[0];
+      const row = example.next || example.old;
+      return `<div class="change-example-row">${icon}<div><h5>${title}</h5><p>${escape(row.company)} · ${escape(row.service)}</p><p class="change-example-detail">${render(example)}</p></div></div>`;
+    };
+    const fieldDiff = example => example.old && example.next
+      ? (['pic', 'company', 'service', 'role'].filter(key => example.old[key] !== example.next[key]).map(key => `${{ pic: 'PIC', company: 'Company', service: 'Service', role: 'Role' }[key]}: ${escape(example.old[key])} → <strong>${escape(example.next[key])}</strong>`).join('<br>') || `<strong>${escape(example.kind)}</strong>`)
+      : `<strong>${escape(example.kind)}</strong>`;
+    const periodText = example => {
+      const row = example.old || example.next;
+      return `${fmtMonth(row.month)} ${example.kind.includes('removed') ? 'record removed' : 'record added'}`;
+    };
+    const completionText = example => `<span class="change-status ${escape(example.old.status)}">${status(example.old)}</span> → <span class="change-status ${escape(example.next.status)}">${status(example.next)}</span>`;
+    const examples = [
+      exampleItem('Company Assignment', icons.company, assignment, fieldDiff),
+      exampleItem('Reporting Period Change', icons.period, period, periodText),
+      exampleItem('PIC Completion Change', icons.completion, completion, completionText)
+    ].join('');
+    return `<div class="change-summary-head"><h3 class="change-summary-title">Excel Changes Summary</h3><p class="workflow-note">Compared with the current baseline: <strong>${escape(activeVersion?.fileName || 'no baseline saved yet')}</strong></p></div><div class="change-total"><span>Total Monthly Records Affected</span><strong>${result.changedRecords}</strong><span class="change-total-note">Unique records with changes</span></div><div class="change-metric-cards">${cards.map(card => `<article class="change-metric-card">${card.icon}<strong>${card.count}</strong><span>${escape(card.label)}</span>${card.desc ? `<em>${escape(card.desc)}</em>` : ''}${card.note ? `<em>${escape(card.note)}</em>` : ''}</article>`).join('')}</div><div class="change-examples"><h4>Example changes</h4>${examples || '<p class="workflow-note">No example changes.</p>'}</div>`;
   }
   function changeTable(changes) {
     currentChanges = changes;
+    const display = { 'Status Changes': 'PIC Completion Changes', 'Assignment Changes': 'Company Changes (add/remove)', 'Monthly Updates': 'Period Changes' };
     const groups = ['Status Changes', 'Assignment Changes', 'Monthly Updates'].filter(name => changes.some(change => change.category === name));
-    return `<div class="workflow-tools"><label>Search changes<input id="changeSearch" class="workflow-input" type="search" placeholder="PIC, company, service, month or status"></label><label>Change group<select id="changeGroup" class="workflow-input"><option value="">All groups</option>${groups.map(name => `<option>${name}</option>`).join('')}</select></label></div><p id="changeCount" class="workflow-note" aria-live="polite"></p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr>${['Change', 'PIC', 'Company', 'Service', 'Role', 'Month', 'Task', 'Old status', 'New status'].map(name => `<th scope="col">${name}</th>`).join('')}</tr></thead><tbody id="changeRows"></tbody></table></div>`;
+    return `<div class="workflow-tools"><label>Search changes<input id="changeSearch" class="workflow-input" type="search" placeholder="PIC, company, service, month or status"></label><label>Change group<select id="changeGroup" class="workflow-input"><option value="">All groups</option>${groups.map(name => `<option value="${name}">${display[name]}</option>`).join('')}</select></label></div><p id="changeCount" class="workflow-note" aria-live="polite"></p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr>${['Change', 'PIC', 'Company', 'Service', 'Role', 'Month', 'Task', 'Old status', 'New status'].map(name => `<th scope="col">${name}</th>`).join('')}</tr></thead><tbody id="changeRows"></tbody></table></div>`;
   }
+  const groupName = name => ({ 'Status Changes': 'PIC Completion Changes', 'Assignment Changes': 'Company Changes (add/remove)', 'Monthly Updates': 'Period Changes' })[name] || name;
   function renderChanges() {
     const search = $('changeSearch').value.toLowerCase(), category = $('changeGroup').value;
     const filtered = currentChanges.filter(change => (!category || change.category === category) && JSON.stringify(change).toLowerCase().includes(search));
     $('changeCount').textContent = `${filtered.length} of ${currentChanges.length} changes. Old assignments are shown below changed values.`;
     let previous = '';
     $('changeRows').innerHTML = filtered.map(change => {
-      const group = previous !== change.category ? `<tr class="group-row"><th colspan="9">${escape(change.category)}</th></tr>` : '';
+      const group = previous !== change.category ? `<tr class="group-row"><th colspan="9">${escape(groupName(change.category))}</th></tr>` : '';
       previous = change.category;
       const row = change.next || change.old;
       const cells = ['pic', 'company', 'service', 'role', 'month', 'task'].map(key => `<td>${escape(row[key])}${change.old && change.next && change.old[key] !== change.next[key] ? `<span class="old-value">Previously: ${escape(change.old[key])}</span>` : ''}</td>`).join('');
@@ -123,31 +148,9 @@
     else content += simpleSummary(draft);
     if (!initial && !noChanges) content += '<details id="changeDetails" class="change-details"><summary>View Details</summary><p class="workflow-note">Full change list and optional assignment matching. A monthly record may appear in more than one category.</p>';
     if (draft.warnings?.length) content += `<ul class="workflow-note">${draft.warnings.map(warning => `<li>${escape(warning)}</li>`).join('')}</ul>`;
-    if (draft.mappingOptions?.length) content += `<details class="workflow-mappings"><summary>Link renamed or reassigned companies (${draft.mappingOptions.length})</summary><p class="workflow-note">This file has no matching permanent task ID for these tasks. If a company was renamed or moved, select its previous task. Otherwise leave it as a new task. Excel row numbers are never used as identities.</p>${draft.mappingOptions.map((mapping, i) => `<label class="workflow-mapping">${escape(`${mapping.service} · ${mapping.company} · ${mapping.pic} · ${mapping.role}`)}<select class="workflow-input assignment-match" data-index="${i}"><option value="">Keep as a new task</option>${mapping.options.map((old, j) => `<option value="${j}">${escape(`${old.company} · ${old.pic} · ${old.role}`)}</option>`).join('')}</select></label>`).join('')}<button type="button" id="applyMatches" class="workflow-button">Recalculate matches</button></details>`;
     if (!initial && !noChanges) content += changeTable(draft.changes) + '</details>';
     screen(3, noChanges ? 'No Changes Detected' : 'KPI Changes Detected', noChanges ? 'The saved baseline is unchanged.' : initial ? 'Ready to create the initial baseline.' : 'Document validated successfully. No changes have been applied yet.', content, [cancel, ...(!noChanges ? [{ label: 'Update Successful', primary: true, id: 'approveUpdate', run: commit }] : [])]);
     if (!initial && !noChanges) bindTable();
-    $('applyMatches')?.addEventListener('click', async event => {
-      event.target.disabled = true;
-      busy = true;
-      const generation = ++requestGeneration;
-      $('workflowFooter').querySelectorAll('button').forEach(button => button.disabled = true);
-      try {
-        const mappings = { ...(draft.matchMappings || {}) };
-        document.querySelectorAll('.assignment-match').forEach(select => {
-          if (select.value === '') return;
-          const mapping = draft.mappingOptions[Number(select.dataset.index)];
-          mappings[mapping.key] = mapping.options[Number(select.value)].key;
-        });
-        const updated = await api('match', { method: 'POST', body: JSON.stringify({ draftId: draft.id, mappings }) });
-        if (generation !== requestGeneration) return;
-        draft = { ...draft, ...updated, matchMappings: mappings }; review();
-      } catch (error) {
-        if (generation !== requestGeneration) return;
-        busy = false; showError(error); event.target.disabled = false;
-        $('workflowFooter').querySelectorAll('button').forEach(button => button.disabled = false);
-      }
-    });
   }
   async function validate() {
     if (busy) return;
@@ -265,36 +268,11 @@
         }
       } }]);
   }
-  const filenameKey = name => String(name).normalize('NFKC').trim().toLowerCase();
-  function sameNamePrompt() {
-    screen(1, 'File Name Already Exists', 'Do you want to use the newly uploaded file?',
-      '<p><strong>' + escape(file.name) + '</strong></p><p>A file with this name already exists in Version History. The newly uploaded file will be validated and compared with the current baseline. Review its changes before applying the update.</p>',
-      [cancel, { label: 'Use Uploaded File', primary: true, run: validate }]);
-  }
-  async function checkUploadName() {
-    const generation = ++requestGeneration;
-    if (activeVersion && filenameKey(activeVersion.fileName) === filenameKey(file.name)) {
-      sameNamePrompt(activeVersion, activeVersion.id);
-      return;
-    }
-    screen(1, 'Confirm Upload', 'Checking the filename in Version History…', '<p role="status"><span class="workflow-spinner" aria-hidden="true"></span>Checking saved filenames.</p>', [cancel]);
-    try {
-      const data = await api('versions');
-      if (generation !== requestGeneration || !dialog.open) return;
-      const match = data.versions.find(version => filenameKey(version.fileName) === filenameKey(file.name));
-      if (match) { sameNamePrompt(match, data.currentId); return; }
-      screen(1, 'Confirm Upload', 'Do you want to validate the selected Excel file?', `<p>${escape(file.name)}</p><p class="workflow-note">The file will be compared with ${escape(activeVersion?.fileName || 'no previous baseline')}. Selecting or validating a file does not apply it.</p>`, [cancel, { label: 'Validate File', primary: true, run: validate }]);
-    } catch (error) {
-      if (generation !== requestGeneration || !dialog.open) return;
-      screen(1, 'Confirm Upload', 'Saved filenames could not be checked.', '', [cancel, { label: 'Retry', run: checkUploadName }]);
-      showError(error);
-    }
-  }
   $('excelUpload').addEventListener('change', event => {
     file = event.target.files?.[0];
     if (!file || !ready) return;
     draft = null;
-    checkUploadName();
+    validate();
   });
   $('versionHistory').addEventListener('click', () => history().catch(error => { screen(0, 'Version History', '', '', [{ label: 'Close', run: close }]); showError(error); }));
   dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });

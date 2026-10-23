@@ -56,3 +56,20 @@
 .change-status.notApplicable { color: #64748b; }
 .change-details { margin-top: 18px; }
 .change-details > summary { cursor: pointer; font-size: 13px; font-weight: 650; padding: 12px 0; }
+.change-summary-head { margin-bottom: 8px; }
+.change-summary-head .change-summary-title { margin: 0 0 2px; }
+.change-total-note { font-size: 13px; color: #60748b; font-weight: 400; }
+.change-metric-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0 4px; }
+.change-metric-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; justify-items: start; background: #fff; }
+.change-metric-card svg { width: 20px; height: 20px; color: #8aa0b5; }
+.change-metric-card strong { font-size: 24px; line-height: 1; color: var(--navy); }
+.change-metric-card > span { font-size: 13px; font-weight: 650; }
+.change-metric-card em { font-style: normal; font-size: 12px; color: #60748b; }
+.change-examples { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 14px; }
+.change-examples h4 { margin: 0 0 2px; font-size: 14px; }
+.change-example-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; }
+.change-example-row svg { width: 18px; height: 18px; margin-top: 2px; color: #8aa0b5; }
+.change-example-row h5 { margin: 0 0 4px; font-size: 13.5px; }
+.change-example-row p { margin: 2px 0; font-size: 13px; color: #33475c; }
+.change-example-detail { font-weight: 600; }
+@media (max-width: 620px) { .change-metric-cards { grid-template-columns: 1fr; } }
