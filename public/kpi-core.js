@@ -6,12 +6,22 @@
   const services = ['Accounting', 'Payroll', 'E-Invoice', 'SST'];
   const clean = value => String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ');
   const normalized = value => clean(value).toUpperCase();
-  const label = { completed: 'Task Done', delay: 'Delay Task', waitApproval: 'Wait for Approval', notApplicable: 'Not Applicable', notDue: 'Not due yet' };
+  const label = { completed: 'PIC Completed', delay: 'Delayed', waitApproval: 'Empty / Pending', notApplicable: 'Boss Completed', notDue: 'Not Yet Due' };
   const serviceName = name => /\bACC\b|ACCOUNTING/i.test(name) ? 'Accounting' : /PAYROLL/i.test(name) ? 'Payroll' : /E[- ]?INV/i.test(name) ? 'E-Invoice' : /\bSST\b/i.test(name) ? 'SST' : null;
   const monthNow = (date = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit' }).formatToParts(date).reduce((out, part) => ({ ...out, [part.type]: part.value }), {});
   function currentMonth(date) { const parts = monthNow(date); return `${parts.year}-${parts.month}`; }
-  const rawStatus = row => Kpi.statusKeys.find(key => row[key] === 1);
-  const effectiveStatus = (row, asOf = currentMonth()) => rawStatus(row) === 'delay' && row.month >= asOf ? 'notDue' : rawStatus(row);
+  const rawStatus = row => row.waitApproval === 1 ? 'delay' : Kpi.statusKeys.find(key => row[key] === 1);
+  let deadlines = {};
+  function setDeadlines(value) { deadlines = { ...value }; }
+  function currentDate(date = new Date()) { return new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Singapore', year:'numeric',month:'2-digit',day:'2-digit'}).format(date); }
+  function effectiveStatus(row, asOf = currentDate()) {
+    const status = rawStatus(row);
+    if (status !== 'delay') return status;
+    // A dashboard month selection is a reporting cutoff, inclusive of To.
+    if (/^20\d\d-(0[1-9]|1[0-2])$/.test(asOf)) return row.month <= asOf ? 'delay' : 'notDue';
+    const deadline = deadlines[row.month];
+    return deadline && asOf > deadline ? 'delay' : 'notDue';
+  }
   const statusLabel = (row, asOf) => row ? label[effectiveStatus(row, asOf)] : '—';
   const taskName = row => row.task || (row.service === 'E-Invoice' ? `${row.invoiceType || 'Billed'} E-Invoice` : row.service === 'Payroll' && /e[- ]?pcb/i.test(row.company) ? 'Payroll / e-PCB' : `${row.service} review`);
   const identityKey = row => JSON.stringify([row.service, normalized(row.company), taskName(row), row.role, normalized(row.pic)]);
@@ -41,7 +51,7 @@
     return { rows, errors: [...new Set(errors)].slice(0, 100) };
   }
 
-  function validateWorkbook(workbook, XLSX) {
+  function validateWorkbook(workbook, XLSX, baselineRows = []) {
     const errors = [], warnings = [], matrix = new Map();
     for (const name of workbook.SheetNames) {
       const service = serviceName(name);
@@ -58,6 +68,7 @@
         if (!sheet['!ref']) { errors.push(`${name}: empty worksheet.`); continue; }
         const range = XLSX.utils.decode_range(sheet['!ref']);
         if (range.e.r > 2000 || range.e.c > 120) { errors.push(`${name}: worksheet is too large.`); continue; }
+        if (/SUMMARY/i.test(name)) continue;
         const value = (r, c) => sheet[XLSX.utils.encode_cell({ r, c })]?.v;
         let pic = '', months = [], idColumn = -1;
         for (let r = range.s.r; r <= range.e.r; r++) {
@@ -87,7 +98,7 @@
         }
       }
       if (!errors.length) {
-        try { rows = Kpi.rowsFromWorkbook(workbook, XLSX); }
+        try { rows = Kpi.rowsFromWorkbook(workbook, XLSX, baselineRows); }
         catch (error) { errors.push(error.message); }
       }
       // Optional stable IDs on matrix rows; main/sub reviewers need distinct IDs.
@@ -120,7 +131,7 @@
           let status;
           try {
             status = Kpi.classifyCell(cell);
-            if (!clean(cell?.v) && !Kpi.hasColor(cell) && /approval/i.test(record['Status Category'])) status = 'waitApproval';
+
           } catch (error) { errors.push(`Clean_Data, row ${index + 2}: ${error.message}`); return; }
           const month = /^20\d\d-(0[1-9]|1[0-2])$/.test(clean(record.Month)) ? clean(record.Month) : Kpi.headerMonth({ v: record.Month }, XLSX);
           const row = { service, pic: clean(record.Reviewer || record.PIC), company: clean(record.Company).replace(/\s+self[- ]billed?$/i, ''), role: /^sub$/i.test(role) ? 'Sub' : /^main$/i.test(role) ? 'Main' : role, month,
@@ -150,7 +161,7 @@
     return [...groups.values()];
   }
 
-  function compare(oldRows, input, mappings = {}, asOf = currentMonth()) {
+  function compare(oldRows, input, mappings = {}, asOf = currentDate()) {
     const previous = assignments(oldRows || []), incoming = assignments(input);
     const used = new Set(), matches = new Map();
     const match = (next, old) => { if (used.has(old.key)) throw new Error('A previous task cannot be matched twice.'); matches.set(next.key, old); used.add(old.key); };
@@ -201,5 +212,5 @@
     changes.sort((a, b) => JSON.stringify([a.category, (a.next || a.old).service, (a.next || a.old).company, (a.next || a.old).month]).localeCompare(JSON.stringify([b.category, (b.next || b.old).service, (b.next || b.old).company, (b.next || b.old).month])));
     return { rows: output, changes, mappingOptions, firstImport: !oldRows?.length, counts: Object.fromEntries(['Status Changes', 'Assignment Changes', 'Monthly Updates'].map(category => [category, changes.filter(change => change.category === category).length])), changedRecords: new Set(changes.map(change => change.recordId)).size };
   }
-  return { services, clean, label, rawStatus, statusLabel, effectiveStatus, currentMonth, taskName, identityKey, validateRows, validateWorkbook, compare };
+  return { setDeadlines, currentDate, services, clean, label, rawStatus, statusLabel, effectiveStatus, currentMonth, taskName, identityKey, validateRows, validateWorkbook, compare };
 });

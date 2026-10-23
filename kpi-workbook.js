@@ -21,9 +21,9 @@
   function classifyCell(cell) {
     const value = text(cell && cell.v);
     // Explicit marks take precedence over a cell's background color.
-    if (/^[✔✓☑](?:\uFE0F)?$/.test(value) || /^closing$/i.test(value)) return "completed";
+    if (/^[✔✓☑](?:\uFE0F)?$/.test(value) || /^(closing|tick|LY|YS|JW|IZA|YEOH)$/i.test(value)) return "completed";
     if (/^[-–—\s]+$/.test(value)) return "notApplicable";
-    if (hasColor(cell)) return "waitApproval";
+    // Empty cells ignore background colour.
     if (!value) return "delay";
     throw new Error(`Unrecognized task status: ${value}`);
   }
@@ -42,7 +42,7 @@
     return `${match[2].length === 2 ? "20" : ""}${match[2]}-${String(month).padStart(2, "0")}`;
   }
 
-  function rowsFromWorkbook(workbook, XLSX) {
+  function rowsFromWorkbook(workbook, XLSX, baselineRows = []) {
     const rows = [];
     for (const sheetName of workbook.SheetNames) {
       const service = /\bACC\b|ACCOUNTING/i.test(sheetName) ? "Accounting"
@@ -53,6 +53,34 @@
       const sheet = workbook.Sheets[sheetName];
       if (!sheet["!ref"]) continue;
       const range = XLSX.utils.decode_range(sheet["!ref"]);
+      if (/SUMMARY/i.test(sheetName)) {
+        const names = { LY: "LING YIN", YS: "YOONG SHI", JW: "JIA WEN", IZA: "IZA", YEOH: "YEOH" };
+        const canonical = value => text(value).toUpperCase().replace(/S\/B/g, "SDN BHD");
+        let months = [];
+        for (let r = range.s.r; r <= range.e.r; r++) {
+          const at = c => sheet[XLSX.utils.encode_cell({ r, c })];
+          const header = [];
+          for (let c = 2; c <= range.e.c; c++) { const month = headerMonth(at(c), XLSX); if (month) header.push({ c, month }); }
+          if (header.length) { if (new Set(header.map(x => x.month)).size !== header.length) throw new Error(sheetName + ': duplicate month headings.'); months = header; continue; }
+          if (!/^\d+$/.test(text(at(0)?.v))) continue;
+          if (!text(at(1)?.v) || !months.length) throw new Error(sheetName + ': missing company or month headings at row ' + (r + 1));
+          const rawCompany = text(at(1).v);
+          const invoiceType = /self[- ]bill/i.test(rawCompany) ? "Self-bill" : "Billed";
+          const company = service === "E-Invoice" ? text(rawCompany.replace(/self[- ]billed?/i, "")) : rawCompany;
+          const candidates = baselineRows.filter(x => x.service === service && x.role === "Main" && canonical(x.company) === canonical(company) && (service !== "E-Invoice" || x.invoiceType === invoiceType));
+          for (const {c, month} of months) {
+            const cell = at(c), mark = text(cell?.v).toUpperCase();
+            const exact = candidates.filter(x => x.month === month);
+            const assigned = [...new Set((exact.length ? exact : candidates).map(x => x.pic))];
+            const pic = names[mark] || (assigned.length === 1 ? assigned[0] : "UNASSIGNED");
+            const row = { service, company, pic, role: "Main", month, completed: 0, delay: 0, waitApproval: 0, notApplicable: 0, sourceSheet: sheetName, sourceCell: XLSX.utils.encode_cell({r,c}) };
+            if (service === "E-Invoice") row.invoiceType = invoiceType;
+            try { row[classifyCell(cell)] = 1; } catch(error) { throw new Error(sheetName + '!' + row.sourceCell + ': ' + error.message); }
+            rows.push(row);
+          }
+        }
+        continue;
+      }
       let pic = "", months = [];
       const cellAt = (r, c) => sheet[XLSX.utils.encode_cell({ r, c })];
       const valueAt = (r, c) => text(cellAt(r, c)?.v);

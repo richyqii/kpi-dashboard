@@ -48,6 +48,7 @@
   }
   async function loadCurrent() {
     const data = await api('current');
+
     activeVersion = data.version;
     showVersionMeta(activeVersion);
     window.KpiDashboard.apply(data.rows, data.version?.fileName || 'No baseline yet');
@@ -67,7 +68,7 @@
   }
   function simpleSummary(result) {
     const descriptions = {
-      'Status Changes': 'Updates to task completion, delays, approval or applicability.',
+      'Status Changes': 'Updates to PIC completion, boss completion or empty tasks.',
       'Assignment Changes': 'Changes to PIC, company or role, including added and removed tasks.',
       'Monthly Updates': 'A month’s record was added or removed for an existing task.'
     };
@@ -304,6 +305,7 @@
     if (dialog.open || document.hidden) return;
     try {
       const data = await api('current');
+
       if (data.version?.id !== activeVersion?.id) { activeVersion = data.version; window.KpiDashboard.apply(data.rows, data.version?.fileName || 'No baseline yet'); $('uploadStatus').textContent = 'The latest shared baseline has been loaded.'; }
       showVersionMeta(activeVersion);
     } catch { /* Retain the last successfully loaded dataset during an outage. */ }

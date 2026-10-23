@@ -735,22 +735,11 @@
   </section>
 
   <main>
-    <section class="panel filters" aria-label="Dashboard filters">
-      <div class="selection-bar">
-        <div class="selection-field"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3H5Z"/><path d="M9 15h6"/></svg></span><div class="selection-control"><label for="picTabs">PIC</label><select id="picTabs" class="selection-dropdown"></select></div></div>
-        <div class="selection-field"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M9 6V3h6v3M4 12h16M10 12v3h4v-3"/></svg></span><div class="selection-control"><label for="serviceTabs">Service</label><select id="serviceTabs" class="selection-dropdown"></select></div></div>
-        <div class="selection-field" id="roleRow"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v2"/></svg></span><div class="selection-control"><label for="roleTabs">Role</label><select id="roleTabs" class="selection-dropdown" aria-describedby="roleHelp"></select></div></div>
-        <button type="button" id="clearFilters" class="clear-filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v7l-4 2v-9L3 4Z"/><path d="m17 17 4 4m0-4-4 4"/></svg>Clear Filters</button>
-      </div>
-      <p id="roleHelp" class="selection-help">Reviewer role applies to Accounting. E-Invoice type options appear when E-Invoice is selected.</p>
-      <div class="filter-row" id="invoiceTypeRow"><div class="filter-label">E-Invoice Type</div><div class="tabs" id="invoiceTypeTabs"></div></div>
-    </section>
-
     <section class="panel monthly-status-chart">
       <h2>Overall Status Chart</h2>
       <div class="sub">Current filtered selection summary</div>
       <div class="status-month-filter">
-        <div class="filter-label">Month</div>
+        <div class="filter-label">Set Month</div>
         <div class="dates">
           <div class="date-control">
             <label for="fromDate">From</label>
@@ -777,13 +766,13 @@
           </div>
           <details class="completion-calc-box"><summary>Completion rate calculation</summary>
             <div class="completion-calc-label">Complete Rate Calculation</div>
-            <div class="completion-calc-formula">Task Done / (Task Done + Delay Task + Wait for Approval)</div>
-            <div class="completion-calc-values" id="completionCalcValues">0 / (0 + 0 + 0)</div>
+            <div class="completion-calc-formula">(PIC Completed + Boss Completed) / Total Assigned Tasks</div>
+            <div class="completion-calc-values" id="completionCalcValues">(0 + 0) / 0</div>
             <div class="completion-calc-result" id="completionCalcResult">= 0.0%</div>
           </details>
           <div class="status-summary">
             <div class="assigned-summary"><span>Total Assigned Tasks</span><strong id="donutAssignedLegend">0</strong><small>Card percentages are shares of assigned tasks.</small></div>
-            <div class="status-summary-cards"><button type="button" class="status-summary-card complete status-filter" data-status="complete"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12l4 4 8-8"/></svg></span><span>Task Done</span></span><strong id="donutCompleteLegend">0</strong><span class="status-card-percent" id="completeShare">0.0%</span></button><button type="button" class="status-summary-card delay status-filter" data-status="delay"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v6m0 4h.01M3 20 12 3l9 17H3Z"/></svg></span><span>Delay Task</span></span><strong id="donutDelayLegend">0</strong><span class="status-card-percent" id="delayShare">0.0%</span></button><button type="button" class="status-summary-card approval status-filter" data-status="approval"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span><span>Wait for Approval</span></span><strong id="donutApprovalLegend">0</strong><span class="status-card-percent" id="approvalShare">0.0%</span></button><button type="button" class="status-summary-card na status-filter" data-status="na"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12"/></svg></span><span>Not Applicable</span></span><strong id="donutNaLegend">0</strong><span class="status-card-percent" id="naShare">0.0%</span></button></div>
+            <div class="status-summary-cards"><button type="button" class="status-summary-card complete status-filter" data-status="complete"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12l4 4 8-8"/></svg></span><span>PIC Completed</span></span><strong id="donutCompleteLegend">0</strong><span class="status-card-percent" id="completeShare">0.0%</span></button><button type="button" class="status-summary-card delay status-filter" data-status="delay"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v6m0 4h.01M3 20 12 3l9 17H3Z"/></svg></span><span>Delayed</span></span><strong id="donutDelayLegend">0</strong><span class="status-card-percent" id="delayShare">0.0%</span></button><button type="button" class="status-summary-card na status-filter" data-status="na"><span class="status-card-heading"><span class="status-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12"/></svg></span><span>Boss Completed</span></span><strong id="donutNaLegend">0</strong><span class="status-card-percent" id="naShare">0.0%</span></button></div>
           </div>
         <div class="clickable-card company-count" id="companyKpiCard" role="button" tabindex="0" title="Go to company selection">
           <div class="label">Total Companies</div>
@@ -793,9 +782,20 @@
         </div>
       </div>
       <div class="status-guidance">
-        <span>✔ or Closing: <strong>Task Done</strong> · Dashes: <strong>Not Applicable</strong> · Blank box: <strong>Delay Task</strong> · Colored box: <strong>Wait for Approval</strong>.</span>
-        <span>Click a status card to filter the Monthly Status Trend. <strong>Select All</strong> shows all four statuses. Not Applicable is excluded from the completion rate.</span>
+        <span>Tick, Closing or PIC initials: <strong>PIC Completed</strong> &middot; Dash: <strong>Boss Completed</strong> &middot; Empty cells (any colour): <strong>Pending or Delayed based on the selected To month</strong>.</span>
+        <span>Monthly Status Trend shows PIC completed tasks only. Completion rate counts only tasks completed by the PIC.</span>
       </div>
+    </section>
+
+    <section class="panel filters" aria-label="Dashboard filters">
+      <div class="selection-bar">
+        <div class="selection-field"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3H5Z"/><path d="M9 15h6"/></svg></span><div class="selection-control"><label for="picTabs">PIC</label><select id="picTabs" class="selection-dropdown"></select></div></div>
+        <div class="selection-field"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M9 6V3h6v3M4 12h16M10 12v3h4v-3"/></svg></span><div class="selection-control"><label for="serviceTabs">Service</label><select id="serviceTabs" class="selection-dropdown"></select></div></div>
+        <div class="selection-field" id="roleRow"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v2"/></svg></span><div class="selection-control"><label for="roleTabs">Role</label><select id="roleTabs" class="selection-dropdown" aria-describedby="roleHelp"></select></div></div>
+        <button type="button" id="clearFilters" class="clear-filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v7l-4 2v-9L3 4Z"/><path d="m17 17 4 4m0-4-4 4"/></svg>Clear Filters</button>
+      </div>
+      <p id="roleHelp" class="selection-help">Reviewer role applies to Accounting. E-Invoice type options appear when E-Invoice is selected.</p>
+      <div class="filter-row" id="invoiceTypeRow"><div class="filter-label">E-Invoice Type</div><div class="tabs" id="invoiceTypeTabs"></div></div>
     </section>
 
     <p class="pending-note" id="pendingTaskNote" aria-live="polite"></p>
@@ -803,20 +803,14 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Monthly Status Trend</h2>
-          <div class="sub">All four task statuses by month and company.</div>
+          <div class="sub">PIC completed tasks by month and company.</div>
         </div>
         <div class="trend-detail" id="trendDetail">
           <div class="legend">
-            <span><i class="dot" style="background:var(--green)"></i>Task Done</span>
-            <span><i class="dot" style="background:var(--red)"></i>Delay Task</span>
-            <span><i class="dot" style="background:var(--amber)"></i>Wait for Approval</span>
-            <span><i class="dot" style="background:var(--gray)"></i>Not Applicable</span>
+            <span><i class="dot" style="background:var(--green)"></i>PIC Completed</span>
           </div>
           <div class="chart-tools">
-            <div class="chart-total"><span>Task Done</span><strong id="chartCompletedTotal">0</strong></div>
-            <div class="chart-total delay"><span>Delay Task</span><strong id="chartDelayTotal">0</strong></div>
-            <div class="chart-total approval"><span>Wait for Approval</span><strong id="chartApprovalTotal">0</strong></div>
-            <div class="chart-total na"><span>Not Applicable</span><strong id="chartNaTotal">0</strong></div>
+            <div class="chart-total"><span>PIC Completed</span><strong id="chartCompletedTotal">0</strong></div>
           </div>
           <div class="company-detail-panel" id="companyDetailPanel">
             <div class="company-detail-tools">
@@ -825,7 +819,7 @@
                 <div class="company-detail-title" id="companyDetailTitle"></div>
               </div>
             </div>
-            <div class="company-box-list" id="companyBoxList"></div>
+            <div class="company-selection-bar"><label>Search company<input id="companySearch" type="search" placeholder="Type a company keyword"></label><label>Select company<select id="companySelect"></select></label><span id="companySearchCount" role="status"></span></div>
           </div>
           <div class="chart" id="chart"></div>
         </div>
@@ -833,40 +827,26 @@
 
     </section>
 
-    <section class="panel table-panel">
-      <div class="panel-head" style="padding-bottom:14px">
-        <h2>Wait for Approval</h2>
-        <div class="sub">Companies with work waiting for approval in the current selection.</div>
-      </div>
-      <table>
-        <thead><tr><th>Company</th><th>Duration</th></tr></thead>
-        <tbody id="waitApprovalTable"></tbody>
-      </table>
-    </section>
-
-    <section class="panel table-panel">
-      <div class="panel-head" style="padding-bottom:14px">
-        <h2>Not Applicable</h2>
-        <div class="sub">Companies marked not applicable in the current selection.</div>
-      </div>
-      <table>
-        <thead><tr><th>Company</th><th>Duration</th></tr></thead>
-        <tbody id="notApplicableTable"></tbody>
-      </table>
+    <section class="panel pic-summary-panel" id="picSummary" hidden aria-labelledby="picSummaryHeading">
+      <div class="pic-summary-head"><h2 id="picSummaryHeading">PIC Summary</h2><strong id="picSummaryName"></strong></div>
+      <p class="sub" id="picSummaryScope"></p>
+      <div class="pic-summary-overview"><dl id="picSummaryFacts"></dl><div class="pic-summary-donut" id="picSummaryDonut" role="img"><div><strong id="picSummaryRate"></strong><span>Completion<br>Rate</span></div></div></div>
+      <h3 class="pic-breakdown-title">Status Breakdown</h3><div id="picSummaryBreakdown"></div>
+      <h3 class="pic-breakdown-title">Companies with Delayed Tasks</h3><div class="pic-delay-table-wrap"><table class="pic-delay-table"><thead><tr><th scope="col">Company</th><th scope="col">Service</th><th scope="col">Delayed Months</th><th scope="col">Delayed Tasks</th></tr></thead><tbody id="picDelayedCompanies"></tbody></table></div>
     </section>
 
     <section class="breakdown-section" aria-label="Service and company overview">
-      <p class="sub breakdown-scope">Selected month range &middot; All PICs &middot; Main Reviewer &middot; Billed E-Invoice</p>
+      <p class="sub breakdown-scope">Selected month range &middot; All PICs, roles and invoice types</p>
       <div class="breakdown-grid">
         <section class="panel service-breakdown-panel">
           <div class="breakdown-head"><h2>Service Breakdown</h2><select id="breakdownMetric" aria-label="Service breakdown metric"><option value="completed">By Completion Rate</option><option value="delay">By Delay Rate</option></select></div>
           <div id="serviceBreakdown"></div>
-          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>Task Done</span><span><i style="background:var(--red)"></i>Delay Task</span><span><i style="background:#eab308"></i>Wait for Approval</span><span><i style="background:#95a1b2"></i>Not Applicable</span><span><i style="background:#e8edf3"></i>Not due yet</span></div>
-          <p class="sub">Rates exclude Not Applicable and tasks not due yet.</p>
+          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>PIC Completed</span><span><i style="background:var(--red)"></i>Delayed</span><span><i style="background:#95a1b2"></i>Not Yet Due</span><span><i style="background:#3984c6"></i>Boss Completed</span></div>
+          <p class="sub">Completion rate is PIC Completed divided by all assigned tasks.</p>
         </section>
         <section class="panel company-delay-panel">
           <div class="breakdown-head"><h2>Company Delay Summary</h2><select id="delayLimit" aria-label="Company delay limit"><option value="5">Top 5 Companies</option><option value="10">Top 10 Companies</option><option value="all">All Companies</option></select></div>
-          <div class="delay-table-wrap"><table><thead><tr><th>Company</th><th>Service</th><th>Delay Tasks</th></tr></thead><tbody id="companyDelaySummary"></tbody></table></div>
+          <div class="delay-table-wrap"><table><thead><tr><th>Company</th><th>Service</th><th>Delayed Tasks</th></tr></thead><tbody id="companyDelaySummary"></tbody></table></div>
         </section>
       </div>
     </section>
@@ -887,13 +867,12 @@
     let pics = ["Yoong Shi", "Jia Wen", "Ling Yin", "Iza"];
     const roles = ["Main Reviewer", "Sub Reviewer"];
     const eInvoiceTypes = ["Billed", "Self-bill"];
-    const state = { service: "Accounting", pic: "Yoong Shi", role: "Main Reviewer", invoiceType: "Billed", company: "All Companies", detailCompany: "All Companies", trendOpen: true, trendFocus: null };
-    const colors = { Completed: "#19a477", Delay: "#df5a62", "Wait for Approval": "#eab308", "Not Applicable": "#95a1b2" };
+    const state = { service: "All Services", pic: "All PICs", role: "All Roles", invoiceType: "All Types", company: "All Companies", detailCompany: "All Companies", trendOpen: true, trendFocus: null };
+    const colors = { Completed: "#19a477", Delay: "#df5a62", "Not Yet Due": "#95a1b2", "Boss Completed": "#3984c6" };
     const statuses = [
-      { key: "Completed", label: "Task Done", focus: "complete" },
-      { key: "Delay", label: "Delay Task", focus: "delay" },
-      { key: "Wait for Approval", label: "Wait for Approval", focus: "approval" },
-      { key: "Not Applicable", label: "Not Applicable", focus: "na" }
+      { key: "Completed", label: "PIC Completed", focus: "complete" },
+      { key: "Delay", label: "Delayed", focus: "delay" },
+      { key: "Boss Completed", label: "Boss Completed", focus: "na" }
     ];
     const picColors = { "Yoong Shi": "#24558d", "Jia Wen": "#19a477", "Ling Yin": "#eea52c", Iza: "#7461d1" };
     const originalDashboardData = dashboardData.slice();
@@ -933,15 +912,15 @@
     }
     function availableEInvoiceTypes() {
       const types = eInvoiceTypes.filter(type => activeDashboardCompanyData.some(row =>
-        row.service === "E-Invoice" && row.pic === state.pic.toUpperCase() && row.invoiceType === type));
-      return types.length ? types : ["Billed"];
+        row.service === "E-Invoice" && (state.pic === "All PICs" || row.pic === state.pic.toUpperCase()) && row.invoiceType === type));
+      return ["All Types", ...(types.length ? types : ["Billed"])];
     }
     function buildTabs(id, values, key) {
       const root = document.getElementById(id);
       const choose = value => {
         state[key] = value;
-        if (key === "service" && state.service !== "Accounting") state.role = "Main Reviewer";
-        if (key === "service" && state.service !== "E-Invoice") state.invoiceType = "Billed";
+        if (key === "service") state.role = "All Roles";
+        if (key === "service") state.invoiceType = "All Types";
         if (key === "service" || key === "invoiceType") {
           state.detailCompany = "All Companies";
           state.company = "All Companies";
@@ -964,24 +943,69 @@
     function filteredCompanyRows() {
       const role = state.role === "Sub Reviewer" ? "Sub" : "Main";
       return activeDashboardCompanyData.filter(row =>
-        row.service === state.service && row.pic === state.pic.toUpperCase() && row.role === role &&
-        (state.service !== "E-Invoice" || row.invoiceType === state.invoiceType));
+        (state.service === "All Services" || row.service === state.service) && (state.pic === "All PICs" || row.pic === state.pic.toUpperCase()) && (state.role === "All Roles" || row.role === role) &&
+        (state.service !== "E-Invoice" || state.invoiceType === "All Types" || row.invoiceType === state.invoiceType));
+    }
+    let availableCompanies = [];
+    function renderCompanyOptions() {
+      const search = document.getElementById("companySearch").value.trim().toLowerCase();
+      const matches = availableCompanies.filter(company => company.toLowerCase().includes(search));
+      const values = ["All Companies", ...matches];
+      if (!values.includes(state.detailCompany)) values.push(state.detailCompany);
+      document.getElementById("companySelect").replaceChildren(...values.map(company => new Option(company, company, false, company === state.detailCompany)));
+      document.getElementById("companySearchCount").textContent = search ? matches.length + " matching companies" : availableCompanies.length + " companies";
     }
     function buildCompanyBoxes(rows) {
-      const root = document.getElementById("companyBoxList");
-      const companies = [...new Set(rows.map(row => row.company))].sort((a, b) => a.localeCompare(b));
-      const pretendCompany = "MAKMUR STEEL E-PCB";
-      const anchorCompany = "ORIENTSYS TECHNOLOGY SDN BHD";
-      if (companies.includes(pretendCompany) && companies.includes(anchorCompany)) {
-        companies.splice(companies.indexOf(pretendCompany), 1);
-        companies.splice(companies.indexOf(anchorCompany) + 1, 0, pretendCompany);
-      }
-      if (state.detailCompany !== "All Companies" && !companies.includes(state.detailCompany)) state.detailCompany = "All Companies";
+      availableCompanies = [...new Set(rows.map(row => row.company))].sort((a,b) => a.localeCompare(b));
+      if (state.detailCompany !== "All Companies" && !availableCompanies.includes(state.detailCompany)) state.detailCompany = "All Companies";
       state.company = state.detailCompany;
       document.getElementById("companyDetailTitle").textContent = state.detailCompany;
-      root.innerHTML = ["All Companies", ...companies].map(company =>
-        `<button type="button" class="company-box ${state.detailCompany === company ? "active" : ""}" data-company="${escapeHtml(company)}">${escapeHtml(company)}</button>`
-      ).join("");
+      renderCompanyOptions();
+    }
+    function renderMonthlyBars(monthly) {
+      const visible = statuses.filter(status => status.focus === "complete");
+      const totals = monthly.map(month => visible.reduce((sum,status) => sum + month[status.key],0));
+      const maximum = Math.max(1,...totals), step = Math.max(1,Math.ceil(maximum/5)), top = step*5;
+      const positive = monthly.flatMap(month => visible.map(status => month[status.key])).filter(value => value>0);
+      const smallest = positive.length ? Math.min(...positive) : 1;
+      const plotHeight = Math.max(300, top/smallest*16);
+      const width = Math.max(780,monthly.length*72+90), left=64, yTop=20, bottom=yTop+plotHeight, height=bottom+72;
+      const plotWidth=width-left-20, slot=plotWidth/Math.max(monthly.length,1), barWidth=Math.min(46,slot*.7);
+      let content='';
+      for(let tick=0;tick<=5;tick++){const value=tick*step,y=bottom-value/top*plotHeight;content+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-20)+'" y2="'+y+'" stroke="#e3eaf2"/><text x="'+(left-12)+'" y="'+(y+4)+'" text-anchor="end" class="monthly-axis">'+value+'</text>';}
+      content+='<text transform="translate(16 '+(yTop+plotHeight/2)+') rotate(-90)" text-anchor="middle" class="monthly-axis">Quantity</text><text x="'+(left+plotWidth/2)+'" y="'+(height-10)+'" text-anchor="middle" class="monthly-axis">Month</text>';
+      monthly.forEach((month,index)=>{const x=left+slot*(index+.5)-barWidth/2;let y=bottom;
+        visible.forEach(status=>{const count=month[status.key];if(!count)return;const barHeight=count/top*plotHeight;y-=barHeight;content+='<g class="monthly-segment" data-month="'+month.month+'" data-status="'+status.focus+'" data-count="'+count+'"><title>'+escapeHtml(chartMonthLabel(month.month)+' - '+status.label+': '+count)+'</title><rect x="'+x+'" y="'+y+'" width="'+barWidth+'" height="'+barHeight+'" fill="'+colors[status.key]+'"/><text x="'+(x+barWidth/2)+'" y="'+(y+barHeight/2)+'" dominant-baseline="central" text-anchor="middle" class="monthly-bar-count">'+count+'</text></g>';});
+        if(!totals[index])content+='<text x="'+(x+barWidth/2)+'" y="'+(bottom-8)+'" text-anchor="middle" class="monthly-axis">0</text>';
+        content+='<text x="'+(x+barWidth/2)+'" y="'+(bottom+24)+'" text-anchor="middle" class="monthly-axis">'+chartMonthLabel(month.month)+'</text>';
+      });
+      document.getElementById("chart").innerHTML=monthly.length?'<div class="monthly-bars-scroll"><svg class="monthly-bars" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Monthly PIC completed tasks: month on X-axis and quantity on Y-axis. Counts inside each bar.">'+content+'</svg></div>':'<p>No months selected.</p>';
+    }
+    function renderPicSummary(months) {
+      const panel = document.getElementById("picSummary");
+      panel.hidden = state.pic === "All PICs" || state.pic.toUpperCase() === "UNASSIGNED";
+      if (panel.hidden) return;
+      const selectedMonths = new Set(months);
+      const rows = filteredCompanyRows().filter(row => selectedMonths.has(row.month));
+      const counts = { completed:0, notApplicable:0, delay:0, notDue:0 };
+      rows.forEach(row => { const key=KpiCore.effectiveStatus(row,document.getElementById("toDate").value); if (key in counts) counts[key]++; });
+      const total=rows.length, rate=total ? counts.completed/total*100 : 0;
+      const delayedCompanies=new Map();
+      rows.filter(row => KpiCore.effectiveStatus(row,document.getElementById("toDate").value)==="delay").forEach(row=>{
+        if(!delayedCompanies.has(row.company)) delayedCompanies.set(row.company,{company:row.company,services:new Set(),months:new Set(),count:0});
+        const item=delayedCompanies.get(row.company);item.services.add(row.service);item.months.add(row.month);item.count++;
+      });
+      const ranked=[...delayedCompanies.values()].sort((a,b)=>b.count-a.count||a.company.localeCompare(b.company));
+      document.getElementById("picDelayedCompanies").innerHTML=ranked.length?ranked.map(item=>'<tr><td>'+escapeHtml(item.company)+'</td><td>'+escapeHtml([...item.services].sort().join(', '))+'</td><td>'+escapeHtml([...item.months].sort().map(chartMonthLabel).join(', '))+'</td><td class="pic-delayed-count">'+item.count+'</td></tr>').join(''):'<tr><td colspan="4">No delayed tasks for this PIC in the selected months and filters.</td></tr>';
+      document.getElementById("picSummaryName").textContent=state.pic;
+      document.getElementById("picSummaryScope").textContent=monthLabel(document.getElementById("fromDate").value)+" to "+monthLabel(document.getElementById("toDate").value)+" | "+state.service+" | All assigned companies";
+      const roleNames=[...new Set(rows.map(row=>row.role === "Sub" ? "Sub Reviewer" : "Main Reviewer"))];
+      const facts=[["Role",roleNames.join(", ") || "No assignments in selection"],["Assigned Companies",companyCount(rows)],["Total Tasks (selected months)",total],["Delayed Tasks",counts.delay],["Completion Rate",rate.toFixed(1)+"%"]];
+      document.getElementById("picSummaryFacts").innerHTML=facts.map(([name,value])=>'<dt>'+name+'</dt><dd>'+escapeHtml(value)+'</dd>').join('');
+      document.getElementById("picSummaryRate").textContent=rate.toFixed(1)+"%";
+      const donut=document.getElementById("picSummaryDonut");donut.style.background='conic-gradient(#19a477 '+rate+'%, #e4eaf2 0)';donut.setAttribute('aria-label',state.pic+' completion rate '+rate.toFixed(1)+'%');
+      const breakdown=[["completed","PIC Completed","#19a477"],["delay","Delayed","#df5a62"]];
+      document.getElementById("picSummaryBreakdown").innerHTML=breakdown.map(([key,label,color])=>{const percent=total?counts[key]/total*100:0;return '<div class="pic-breakdown-row" data-status="'+key+'"><span class="pic-breakdown-label"><i style="background:'+color+'"></i>'+label+'</span><strong class="pic-breakdown-count">'+counts[key]+'</strong><span>'+percent.toFixed(1)+'%</span><div class="pic-breakdown-track"><div style="width:'+percent+'%;background:'+color+'"></div></div></div>';}).join('');
     }
     function companyCount(rows) {
       return new Set(rows.map(row => row.company)).size;
@@ -1014,31 +1038,31 @@
         const key = JSON.stringify([row.company, row.month]);
         if (!groups.has(key)) groups.set(key, { company: row.company, month: row.month, completed: 0, delay: 0, waitApproval: 0, notApplicable: 0, notDue: 0 });
         const group = groups.get(key);
-        const status = KpiCore.effectiveStatus(row);
-        if (status) group[status] += 1;
+        const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value);
+        if (status) group[status === "notDue" ? "waitApproval" : status] += 1;
       });
       return [...groups.values()];
     }
     function renderServiceBreakdown(months) {
       const selectedMonths = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month) && row.role === "Main" && (row.service !== "E-Invoice" || row.invoiceType === "Billed"));
-      const keys = ["completed", "delay", "waitApproval", "notApplicable", "notDue"];
-      const labels = ["Task Done", "Delay Task", "Wait for Approval", "Not Applicable", "Not due yet"];
-      const fills = ["#19a477", "#df5a62", "#eab308", "#95a1b2", "#e8edf3"];
+      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month));
+      const keys = ["completed", "delay", "notDue", "notApplicable"];
+      const labels = ["PIC Completed", "Delayed", "Not Yet Due", "Boss Completed"];
+      const fills = ["#19a477", "#df5a62", "#95a1b2", "#3984c6"];
       const metric = document.getElementById("breakdownMetric").value;
       document.getElementById("serviceBreakdown").innerHTML = services.map(service => {
         const counts = Object.fromEntries(keys.map(key => [key, 0]));
-        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row); if (status in counts) counts[status]++; });
+        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value); if (status in counts) counts[status]++; });
         const total = keys.reduce((sum, key) => sum + counts[key], 0);
-        const active = counts.completed + counts.delay + counts.waitApproval;
-        const rate = active ? (counts[metric] / active * 100).toFixed(1) + "%" : "?";
+        const active = total;
+        const rate = active ? ((metric === "completed" ? counts.completed : counts.delay) / active * 100).toFixed(1) + "%" : "\u2014";
         const description = labels.map((label, i) => label + ": " + counts[keys[i]]).join(", ");
         const segments = keys.map((key, i) => '<span style="width:' + (total ? counts[key] / total * 100 : 0) + '%;background:' + fills[i] + '" title="' + labels[i] + ': ' + counts[key] + '"></span>').join("");
         return '<div class="service-breakdown-row"><strong>' + escapeHtml(service) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(service + '. ' + description) + '">' + segments + '</div><strong class="service-breakdown-rate">' + rate + '</strong></div>';
       }).join("");
       const companies = new Map();
       rows.forEach(row => {
-        if (KpiCore.effectiveStatus(row) !== "delay") return;
+        if (KpiCore.effectiveStatus(row, document.getElementById("toDate").value) !== "delay") return;
         if (!companies.has(row.company)) companies.set(row.company, { company: row.company, services: new Set(), count: 0 });
         const entry = companies.get(row.company); entry.count++; entry.services.add(row.service);
       });
@@ -1054,7 +1078,7 @@
       activeDashboardData = KpiWorkbook.summarize(rows);
       pics = [...new Set(rows.map(row => row.pic))].map(name => name.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()));
       if (!pics.length) pics = ["Yoong Shi", "Jia Wen", "Ling Yin", "Iza"];
-      if (!pics.includes(state.pic)) state.pic = pics[0];
+      if (state.pic !== "All PICs" && !pics.includes(state.pic)) state.pic = "All PICs";
       state.company = "All Companies";
       state.detailCompany = "All Companies";
       state.trendOpen = true;
@@ -1063,15 +1087,16 @@
       render();
     }
     document.getElementById("clearFilters").addEventListener("click", () => {
-      Object.assign(state, { pic: pics[0], service: "Accounting", role: "Main Reviewer", invoiceType: "Billed", company: "All Companies", detailCompany: "All Companies", trendFocus: null });
+      Object.assign(state, { pic: "All PICs", service: "All Services", role: "All Roles", invoiceType: "All Types", company: "All Companies", detailCompany: "All Companies", trendFocus: null });
       render();
     });
     window.KpiDashboard = { apply: applySavedDataset };
+    setInterval(() => { if (!document.hidden) render(); }, 30000);
     function render() {
-      buildTabs("serviceTabs", services, "service");
-      buildTabs("picTabs", pics, "pic");
-      buildTabs("roleTabs", roles, "role");
-      if (!availableEInvoiceTypes().includes(state.invoiceType)) state.invoiceType = "Billed";
+      buildTabs("serviceTabs", ["All Services", ...services], "service");
+      buildTabs("picTabs", ["All PICs", ...pics], "pic");
+      buildTabs("roleTabs", ["All Roles", ...roles], "role");
+      if (!availableEInvoiceTypes().includes(state.invoiceType)) state.invoiceType = "All Types";
       buildTabs("invoiceTypeTabs", availableEInvoiceTypes(), "invoiceType");
       document.getElementById("roleTabs").disabled = state.service !== "Accounting";
       document.getElementById("invoiceTypeRow").style.display = state.service === "E-Invoice" ? "grid" : "none";
@@ -1079,12 +1104,13 @@
       const currentMonth = KpiCore.currentMonth();
       const fromInput = document.getElementById("fromDate");
       const toInput = document.getElementById("toDate");
-      if (!fromInput.value) fromInput.value = `${currentMonth.slice(0, 4)}-01`;
-      if (!toInput.value) toInput.value = currentMonth;
+      const availableMonths = activeDashboardCompanyData.map(row => row.month).sort();
+      if (!fromInput.value) fromInput.value = availableMonths[0] || `${currentMonth.slice(0, 4)}-01`;
+      if (!toInput.value) toInput.value = availableMonths[availableMonths.length - 1] || currentMonth;
       if (fromInput.value > toInput.value) toInput.value = fromInput.value;
       const from = fromInput.value;
-      const effectiveTo = previousMonth(toInput.value);
-      document.getElementById("dateSummary").textContent = `* Check the works until ${monthLabel(effectiveTo)}.`;
+      const effectiveTo = toInput.value;
+      document.getElementById("dateSummary").textContent = `${monthLabel(from)} to ${monthLabel(effectiveTo)} (inclusive)`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
       renderServiceBreakdown(months);
@@ -1095,16 +1121,16 @@
         : companyRows.filter(row => row.company === state.detailCompany);
       const statusRows = rollupCompanyMonthStatus(companyRows, months);
       const chartStatusRows = rollupCompanyMonthStatus(chartRows, months);
-      const pending = statusRows.reduce((sum, row) => sum + row.notDue, 0);
-      document.getElementById("pendingTaskNote").textContent = `${pending} blank tasks are not due yet and are excluded from delay and completion rates. A blank task becomes delayed after its reporting month ends (Singapore time).`;
-      const totals = { Completed: 0, Delay: 0, "Wait for Approval": 0, "Not Applicable": 0 };
+      const pending = 0;
+      document.getElementById("pendingTaskNote").textContent = "The selected To month is the cutoff: empty tasks through that month are Delayed; later months are Not Yet Due.";
+      const totals = { Completed: 0, Delay: 0, "Not Yet Due": 0, "Boss Completed": 0 };
       const monthly = months.map(month => {
         const monthRows = statusRows.filter(row => row.month === month);
         const counts = {
           Completed: monthRows.reduce((sum, row) => sum + row.completed, 0),
           Delay: monthRows.reduce((sum, row) => sum + row.delay, 0),
-          "Wait for Approval": monthRows.reduce((sum, row) => sum + row.waitApproval, 0),
-          "Not Applicable": monthRows.reduce((sum, row) => sum + row.notApplicable, 0)
+          "Not Yet Due": monthRows.reduce((sum, row) => sum + row.waitApproval, 0),
+          "Boss Completed": monthRows.reduce((sum, row) => sum + row.notApplicable, 0)
         };
         Object.keys(totals).forEach(k => totals[k] += counts[k]);
         return { month, ...counts };
@@ -1114,20 +1140,19 @@
         Pending: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notDue, 0),
         Completed: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.completed, 0),
         Delay: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.delay, 0),
-        "Wait for Approval": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.waitApproval, 0),
-        "Not Applicable": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notApplicable, 0)
+        "Not Yet Due": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.waitApproval, 0),
+        "Boss Completed": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notApplicable, 0)
       }));
       const chartCompletedTotal = chartMonthly.reduce((sum, row) => sum + row.Completed, 0);
       const chartDelayTotal = chartMonthly.reduce((sum, row) => sum + row.Delay, 0);
-      const active = totals.Completed + totals.Delay + totals["Wait for Approval"];
+      const active = totals.Completed + totals.Delay + totals["Not Yet Due"] + totals["Boss Completed"];
       document.getElementById("companyKpi").textContent = companyCount(companyRows);
       document.getElementById("trendDetail").classList.toggle("open", state.trendOpen);
       document.getElementById("chartCompletedTotal").textContent = chartCompletedTotal;
-      document.getElementById("chartDelayTotal").textContent = chartDelayTotal;
-      document.getElementById("chartApprovalTotal").textContent = chartMonthly.reduce((sum, row) => sum + row["Wait for Approval"], 0);
-      document.getElementById("chartNaTotal").textContent = chartMonthly.reduce((sum, row) => sum + row["Not Applicable"], 0);
-      const completionRate = active ? totals.Completed / active * 100 : 0;
-      const donutTotal = active + totals["Not Applicable"];
+
+      const completedByAnyone = totals.Completed + totals["Boss Completed"];
+      const completionRate = active ? completedByAnyone / active * 100 : 0;
+      const donutTotal = active;
       let end = 0;
       state.donutSegments = statuses.filter(status => totals[status.key] > 0).map(status => {
         const start = end;
@@ -1141,41 +1166,24 @@
         button.classList.toggle("active", state.trendFocus === button.dataset.status);
         button.setAttribute("aria-pressed", String(state.trendFocus === button.dataset.status));
       });
-      document.getElementById("donutApprovalLegend").textContent = totals["Wait for Approval"];
-      document.getElementById("donutNaLegend").textContent = totals["Not Applicable"];
+
+      document.getElementById("donutNaLegend").textContent = totals["Boss Completed"];
       document.getElementById("selectAllStatusButton").classList.toggle("active", !state.trendFocus);
       document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
       document.getElementById("donutAssignedLegend").textContent = donutTotal + pending;
       document.getElementById("donutCompleteLegend").textContent = totals.Completed;
       document.getElementById("donutDelayLegend").textContent = totals.Delay;
-      document.getElementById("completionCalcValues").textContent = `${totals.Completed} / (${totals.Completed} + ${totals.Delay} + ${totals["Wait for Approval"]})`;
+      document.getElementById("completionCalcValues").textContent = `(${totals.Completed} + ${totals["Boss Completed"]}) / ${active}`;
       document.getElementById("completionCalcResult").textContent = active
-        ? `= ${totals.Completed} / ${active} = ${completionRate.toFixed(1)}%`
+        ? `= ${completedByAnyone} / ${active} = ${completionRate.toFixed(1)}%`
         : "= 0.0%";
       for (const status of statuses) {
         const share = donutTotal + pending ? totals[status.key] / (donutTotal + pending) * 100 : 0;
         document.getElementById(status.focus + "Share").textContent = share.toFixed(1) + "%";
       }
-      const monthAxis = chartMonthly.map(x => `<div class="gantt-axis">${chartMonthLabel(x.month)}</div>`).join("");
-      const ganttRow = (label, key, className, focus) =>
-        `<div class="gantt-row-label">${label}</div>` +
-        chartMonthly.map(x => {
-          const count = x[key];
-          const empty = count ? "" : " empty";
-          const activeBar = count && state.trendFocus === focus ? " active" : "";
-          return `<div class="gantt-cell"><div class="gantt-bar ${className}${empty}${activeBar}" title="${chartMonthLabel(x.month)} ${label.toLowerCase()}: ${count}">${count || ""}</div></div>`;
-        }).join("");
-      let trendRows = statuses.filter(status => !state.trendFocus || status.focus === state.trendFocus)
-        .map(status => ganttRow(status.label, status.key, status.focus, status.focus)).join("");
-      if (!state.trendFocus && chartMonthly.some(row => row.Pending)) trendRows += ganttRow("Not due yet", "Pending", "pending", "pending");
-      document.getElementById("chart").innerHTML =
-        `<div class="gantt-grid" style="--month-count:${Math.max(chartMonthly.length, 1)}">
-          <div class="gantt-axis">Status</div>${monthAxis}
-          ${trendRows}
-        </div>`;
+      renderMonthlyBars(chartMonthly);
 
-      renderDurationTable(statusRows, months, "waitApproval", "waitApprovalTable");
-      renderDurationTable(statusRows, months, "notApplicable", "notApplicableTable");
+      renderPicSummary(months);
     }
     ["fromDate", "toDate"].forEach(id => document.getElementById(id).addEventListener("change", render));
     function navigateToCompanyBoxes() {
@@ -1183,7 +1191,7 @@
       render();
       const panel = document.getElementById("companyDetailPanel");
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
-      const activeCompany = panel.querySelector(".company-box.active") || panel.querySelector(".company-box");
+      const activeCompany = document.getElementById("companySelect");
       if (activeCompany) activeCompany.focus({ preventScroll: true });
     }
     document.getElementById("companyKpiCard").addEventListener("click", navigateToCompanyBoxes);
@@ -1208,13 +1216,9 @@
     }
     document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
-    document.getElementById("companyBoxList").addEventListener("click", event => {
-      const button = event.target.closest(".company-box");
-      if (!button) return;
-      state.detailCompany = button.dataset.company;
-      state.company = state.detailCompany;
-      state.trendOpen = true;
-      render();
+    document.getElementById("companySearch").addEventListener("input", renderCompanyOptions);
+    document.getElementById("companySelect").addEventListener("change", event => {
+      state.detailCompany = event.target.value; state.company = state.detailCompany; state.trendOpen = true; render();
     });
     render();
   </script>

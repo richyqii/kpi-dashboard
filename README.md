@@ -34,7 +34,7 @@ Other open dashboard tabs refresh approved shared data on focus or within 30 sec
 
 Explicit text marks override background fills. Signature rows, worksheet legends and unassigned E-Invoice requests explicitly marked NO are excluded.
 
-These workbooks contain monthly periods rather than individual due dates. A blank task in the current or a future month is displayed as **Not due yet**, excluded from delay totals and completion-rate denominators. It becomes delayed after the reporting month ends in **Asia/Singapore**. This is a display calculation, not a manufactured Excel change or saved version. Not Applicable is also excluded from completion rates. The existing **To** month is the review month: the chart includes work through the preceding month, as stated beside the date filter.
+These workbooks contain monthly periods rather than individual due dates. A blank task in the current or a future month is displayed as **Not due yet**, excluded from delay totals and included in completion-rate denominators. It becomes delayed after the reporting month ends in **Asia/Singapore**. This is a display calculation, not a manufactured Excel change or saved version. Completion rates count both **PIC Completed** and **Boss Completed** tasks. The existing **To** month is the review month: the chart includes work through the preceding month, as stated beside the date filter.
 
 ## Stable task matching
 

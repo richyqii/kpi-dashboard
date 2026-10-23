@@ -50,9 +50,19 @@ export async function api(request, env) {
     if (!['GET', 'POST', 'DELETE'].includes(request.method)) fail(405, 'Method not allowed.');
     if (request.method !== 'GET' && request.headers.get('Origin') !== url.origin) fail(403, 'This request must come from the dashboard.');
     await bootstrap(env);
+    const deadlineRows = await query(env, 'SELECT month, deadline FROM kpi_deadlines').all();
+    const deadlines = Object.fromEntries(deadlineRows.results.map(row => [row.month, row.deadline]));
+    Core.setDeadlines(deadlines);
+    if (route === '/api/deadlines' && request.method === 'POST') {
+      const body = await readBody(request);
+      const months = body.months || [body.month];
+      if (!Array.isArray(months) || !months.length || months.length > 120 || months.some(month => typeof month !== 'string' || !/^20\d\d-(0[1-9]|1[0-2])$/.test(month)) || !/^20\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(body.deadline || '') || new Date(body.deadline + 'T00:00:00Z').toISOString().slice(0,10) !== body.deadline) fail(422, 'Choose a valid reporting month and deadline date.');
+      await env.DB.batch([...new Set(months)].map(month => query(env, 'INSERT INTO kpi_deadlines (month, deadline, updated_at) VALUES (?, ?, ?) ON CONFLICT(month) DO UPDATE SET deadline=excluded.deadline, updated_at=excluded.updated_at', month, body.deadline, now())));
+      return json({ deadlines: { ...deadlines, ...Object.fromEntries(months.map(month => [month, body.deadline])) } });
+    }
     if (route === '/api/current' && request.method === 'GET') {
       const active = await current(env);
-      return json({ version: active?.id ? metadata(active) : null, rows: active?.id ? JSON.parse(active.rows_json) : [] });
+      return json({ deadlines, version: active?.id ? metadata(active) : null, rows: active?.id ? JSON.parse(active.rows_json) : [] });
     }
     if (route === '/api/versions' && request.method === 'GET') {
       const [records, state] = await env.DB.batch([
@@ -87,7 +97,7 @@ export async function api(request, env) {
       let workbook;
       try { workbook = XLSX.read(bytes, { type: 'array', cellStyles: true, sheetStubs: true, cellDates: false }); }
       catch { fail(422, 'The Excel file could not be read. Check that it is not damaged or password protected.'); }
-      const result = Core.validateWorkbook(workbook, XLSX);
+      const result = Core.validateWorkbook(workbook, XLSX, active?.id ? JSON.parse(active.rows_json) : []);
       if (result.errors.length) fail(422, 'Document validation failed. The saved baseline is unchanged.', result.errors);
       return json({ ...await saveDraft(env, active, fileName, result.rows), warnings: result.warnings });
     }
