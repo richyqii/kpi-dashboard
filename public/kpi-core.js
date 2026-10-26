@@ -166,8 +166,29 @@
   }
 
   function assignments(rows) {
-    const groups = new Map();
+    // Older versions could reuse a generated ID after its task changed PIC.
+    // Split only those generated collisions; explicit workbook IDs stay strict.
+    const identities = new Map(), repaired = new Map();
+    const reserved = new Set(rows.map(row => row.assignmentId).filter(Boolean));
     for (const row of rows) {
+      if (!row.explicitId && row.assignmentId?.startsWith('task:')) {
+        if (!identities.has(row.assignmentId)) identities.set(row.assignmentId, new Set());
+        identities.get(row.assignmentId).add(identityKey(row));
+      }
+    }
+    for (const [id, values] of identities) {
+      if (values.size < 2) continue;
+      for (const identity of [...values].sort()) {
+        let key = `${id}|identity:${identity}`;
+        while (reserved.has(key)) key += ':split';
+        reserved.add(key);
+        repaired.set(JSON.stringify([id, identity]), key);
+      }
+    }
+    const groups = new Map();
+    for (const source of rows) {
+      const repairedId = !source.explicitId && repaired.get(JSON.stringify([source.assignmentId, identityKey(source)]));
+      const row = repairedId ? { ...source, assignmentId: repairedId } : source;
       const key = row.assignmentId || (row.explicitId ? `id:${row.explicitId}` : identityKey(row));
       if (!groups.has(key)) groups.set(key, { key, ...row, rows: [] });
       const group = groups.get(key);
@@ -225,9 +246,19 @@
     const changes = [], output = [];
     const add = (category, kind, old, next, id) => changes.push({ category, kind, recordId: `${id}|${(next || old).month}`, old: compact(old), next: compact(next) });
     const compact = row => row ? { pic: row.pic, company: row.company, service: row.service, role: row.role, month: row.month, task: taskName(row), status: rawStatus(row), displayStatus: statusLabel(row, asOf) } : null;
+    // Reserve all existing IDs before allocating any new task, regardless of
+    // workbook order, including IDs whose original identity has been reassigned.
+    const allocated = new Set(previous.map(old => old.assignmentId || old.key));
+    for (const next of incoming) if (next.assignmentId || next.explicitId) allocated.add(next.assignmentId || `id:${next.explicitId}`);
     for (const next of incoming) {
       const old = matches.get(next.key);
-      const id = old?.assignmentId || old?.key || next.assignmentId || (next.explicitId ? `id:${next.explicitId}` : `task:${identityKey(next)}`);
+      let id = old?.assignmentId || old?.key || next.assignmentId || (next.explicitId ? `id:${next.explicitId}` : `task:${identityKey(next)}`);
+      if (!old && !next.assignmentId && !next.explicitId) {
+        const base = id;
+        let suffix = 2;
+        while (allocated.has(id)) id = `${base}|${suffix++}`;
+      }
+      allocated.add(id);
       for (const row of next.rows) output.push({ ...row, task: taskName(row), assignmentId: id });
       if (!old) { if (oldRows?.length) next.rows.forEach(row => add('Assignment Changes', 'Task added', null, row, id)); continue; }
       const assignmentChanged = identityKey(old) !== identityKey(next);

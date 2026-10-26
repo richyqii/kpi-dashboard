@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx/xlsx.mjs';
 import Core from '../public/kpi-core.js';
 import baseline from '../data/baseline.json';
+import { storeDocument, documentRoute, removeUnusedDocuments } from './documents.js';
 
 const encoder = new TextEncoder();
 const fail = (status, message, details) => { throw Object.assign(new Error(message), { status, details }); };
@@ -43,6 +44,7 @@ async function saveDraft(env, active, fileName, input, kind = 'upload', restored
   const draft = { id: id(), baseId: active?.id || null, fileName, createdAt: now(), expiresAt: Date.now() + 3600000, kind, restoredFrom };
   sizeCheck({ input, result });
   await query(env, 'DELETE FROM kpi_drafts WHERE expires_at < ?', Date.now()).run();
+  await removeUnusedDocuments(env);
   await query(env, 'INSERT INTO kpi_drafts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', draft.id, draft.baseId, fileName, draft.createdAt, draft.expiresAt, kind, restoredFrom, JSON.stringify(input), JSON.stringify(result)).run();
   return { ...draft, ...result, warnings: [...warnings, ...(result.warnings || [])], rows: undefined };
 }
@@ -53,6 +55,8 @@ export async function api(request, env) {
     if (!['GET', 'POST', 'DELETE'].includes(request.method)) fail(405, 'Method not allowed.');
     if (request.method !== 'GET' && request.headers.get('Origin') !== url.origin) fail(403, 'This request must come from the dashboard.');
     await bootstrap(env);
+    const documentResponse = await documentRoute(request, env);
+    if (documentResponse) return documentResponse;
     const deadlineRows = await query(env, 'SELECT month, deadline FROM kpi_deadlines').all();
     const deadlines = Object.fromEntries(deadlineRows.results.map(row => [row.month, row.deadline]));
     Core.setDeadlines(deadlines);
@@ -87,6 +91,8 @@ export async function api(request, env) {
       // cannot delete the dataset currently displayed by the dashboard.
       const result = await query(env, 'DELETE FROM kpi_versions WHERE id = ? AND id IS NOT (SELECT current_id FROM kpi_state WHERE id = 1)', versionId).run();
       if (!result.meta.changes && (await current(env))?.id === versionId) fail(409, 'This file is the current baseline. Use another version before removing it.');
+      await query(env, 'DELETE FROM kpi_drafts WHERE id = ?', versionId).run();
+      await removeUnusedDocuments(env);
       return json({ removed: true, versionId });
     }
     if (route === '/api/preview' && request.method === 'POST') {
@@ -102,7 +108,10 @@ export async function api(request, env) {
       catch { fail(422, 'The Excel file could not be read. Check that it is not damaged or password protected.'); }
       const result = Core.validateWorkbook(workbook, XLSX, active?.id ? JSON.parse(active.rows_json) : []);
       if (result.errors.length) fail(422, 'Document validation failed. The saved baseline is unchanged.', result.errors);
-      return json({ ...await saveDraft(env, active, fileName, result.rows), warnings: result.warnings });
+      const draft = await saveDraft(env, active, fileName, result.rows);
+      try { await storeDocument(env, draft.id, bytes); }
+      catch (error) { await query(env, 'DELETE FROM kpi_drafts WHERE id = ?', draft.id).run(); throw error; }
+      return json({ ...draft, warnings: result.warnings });
     }
     if (route === '/api/use-version' && request.method === 'POST') {
       const body = await readBody(request);
@@ -136,6 +145,7 @@ export async function api(request, env) {
     }
     if (route.startsWith('/api/drafts/') && request.method === 'DELETE') {
       await query(env, 'DELETE FROM kpi_drafts WHERE id = ?', route.slice('/api/drafts/'.length)).run();
+      await removeUnusedDocuments(env);
       return json({ cancelled: true });
     }
     if (route === '/api/commit' && request.method === 'POST') {
@@ -155,7 +165,7 @@ export async function api(request, env) {
       }
       await draftResult(env, draft);
       const result = JSON.parse(draft.result_json);
-      if (!result.firstImport && !result.changes.length) return json({ noChanges: true, version: metadata(await current(env)) });
+      if (!result.firstImport && !result.changes.length && body.useUploadedFile !== true) return json({ noChanges: true, version: metadata(await current(env)) });
       const versionId = draft.id, created = now();
       sizeCheck({ rows: result.rows, changes: result.changes });
       // D1 batch is transactional. The conditional INSERT and pointer update form
@@ -172,6 +182,7 @@ export async function api(request, env) {
     }
     fail(404, 'API route not found.');
   } catch (error) {
+    if (!error.status) console.error('KPI API failure:', route, error.message);
     return json({ error: error.status ? error.message : 'The operation could not be completed. Please retry or refresh to check the current saved version.', details: error.details }, error.status || 500);
   }
 }

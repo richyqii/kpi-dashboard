@@ -1,0 +1,34 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
+const {syncDocuments}=require('../scripts/sync-documents.cjs');
+test('sync preserves original bytes, duplicate names and only deletes removed managed versions',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'kpi-sync-'));
+ const bytes=Buffer.from('original workbook bytes');
+ const version=id=>({id,fileName:'same.xlsx',createdAt:'2026-10-26',sha256:crypto.createHash('sha256').update(bytes).digest('hex'),byteLength:bytes.length});
+ const a=version('11111111-1111-1111-1111-111111111111'),b=version('22222222-2222-2222-2222-222222222222');
+ let manifest={schema:1,currentId:b.id,versions:[a,b]},fail=false,corrupt=false;
+ const fetcher=async url=>{
+  if(fail)return new Response('',{status:503});
+  if(url.endsWith('/api/sync-manifest'))return Response.json(manifest);
+  if(url.endsWith('/document'))return new Response(corrupt?'corrupt':bytes);
+  return Response.json({id:url.split('/').at(-2),fileName:'same.xlsx',rows:[]});
+ };
+ const run=()=>syncDocuments({root,fetcher});
+ await run();const folder=path.join(root,'data','uploads');
+ assert.deepEqual(await fs.readFile(path.join(folder,`${a.id}--same.xlsx`)),bytes);
+ assert.deepEqual(await fs.readFile(path.join(folder,`${b.id}--same.xlsx`)),bytes);
+ assert.equal((await run()).saved,0);
+ await fs.writeFile(path.join(folder,'manual.xlsx'),'keep');
+ await fs.writeFile(path.join(root,'data','baseline.json'),'keep');
+ fail=true;await assert.rejects(run(),/503/);fail=false;
+ assert.deepEqual(await fs.readFile(path.join(folder,`${a.id}--same.xlsx`)),bytes);
+ manifest={schema:1,currentId:b.id,versions:[b]};await run();
+ await assert.rejects(fs.stat(path.join(folder,`${a.id}--same.xlsx`)),{code:'ENOENT'});
+ await assert.rejects(fs.stat(path.join(folder,`${a.id}.json`)),{code:'ENOENT'});
+ assert.equal(await fs.readFile(path.join(folder,'manual.xlsx'),'utf8'),'keep');
+ assert.equal(await fs.readFile(path.join(root,'data','baseline.json'),'utf8'),'keep');
+ manifest={schema:1,currentId:a.id,versions:[a,b]};corrupt=true;await assert.rejects(run(),/checksum/);
+ assert.equal(JSON.parse(await fs.readFile(path.join(folder,'manifest.json'))).currentId,b.id);
+ manifest={schema:1,currentId:'../escape',versions:[{...a,id:'../escape'}]};await assert.rejects(run(),/Invalid version ID/);
+});
