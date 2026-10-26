@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "currentId": "1b18c54e-cdb9-4830-b539-dedfda285aeb",
+  "currentId": "787f0cb4-f183-4dd2-989d-b4e7c439f56b",
   "versions": [
     {
       "id": "0d9a3dde-6811-4c02-bd43-4c6cd115ee79",
@@ -10,11 +10,12 @@
       "byteLength": null
     },
     {
-      "id": "1b18c54e-cdb9-4830-b539-dedfda285aeb",
+      "id": "787f0cb4-f183-4dd2-989d-b4e7c439f56b",
       "fileName": "KPI_Status_23.10.2026_DEMO_V2.xlsx",
-      "createdAt": "2026-10-26T06:18:45.914Z",
-      "sha256": null,
-      "byteLength": null
+      "createdAt": "2026-10-26T07:32:28.644Z",
+      "sha256": "d4badc9f5d44fff7dbb5217883b48ae5e23af63dc8abd37dc90a6f0a35a35ead",
+      "byteLength": 11732
     }
-  ]
+  ],
+  "layout": 2
 }
