@@ -945,7 +945,7 @@
       renderTimelineServices();
       const chart = document.getElementById("chart");
       const selected = new Set(months);
-      const scopedRows = activeDashboardCompanyData.filter(row => (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month));
+      const scopedRows = activeDashboardCompanyData.filter(row => String(row.pic || "").replace(/\s+/g, "").toUpperCase() !== "JIAWEN" && (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month));
       const rows = scopedRows.filter(row => KpiCore.rawStatus(row) === "completed");
       const groups = new Map();
       for (const row of scopedRows) {
@@ -955,7 +955,7 @@
         const group = groups.get(key); group.counts.set(row.month, (group.counts.get(row.month) || 0) + 1); group.total++;
       }
       const pics = new Set(rows.map(row => row.pic).filter(pic => pic && pic !== "UNASSIGNED"));
-      const picColours = { "LING YIN": "#dbeafe", "YOONG SHI": "#dcfce7", "JIA WEN": "#fef3c7", "IZA": "#ede9fe", "YEOH": "#fce7f3", "UNASSIGNED": "#e2e8f0" };
+      const picColours = { "LING YIN": "#dbeafe", "YOONG SHI": "#dcfce7", "IZA": "#ede9fe", "YEOH": "#fce7f3", "UNASSIGNED": "#e2e8f0" };
       const otherPics = [...new Set(activeDashboardCompanyData.map(row => row.pic || "UNASSIGNED"))].filter(pic => !picColours[pic]).sort();
       otherPics.forEach((pic, index) => { picColours[pic] = 'hsl(' + ((index * 137.508 + 18) % 360) + ' 65% 85%)'; });
       const colourForPic = pic => picColours[pic] || picColours.UNASSIGNED;

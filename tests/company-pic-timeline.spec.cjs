@@ -5,8 +5,10 @@ test('service-only timeline includes every company and reconciles PIC totals',as
  await page.goto('/');await expect(page.locator('#excelUpload')).toBeEnabled();await expect(page.locator('#companySelect')).toHaveCount(0);await expect(page.locator('#companySearch')).toHaveCount(0);
  const picColours=new Map();
  const verify=async(service,from='2026-01',to='2026-12')=>{
-  const scoped=baseline.rows.filter(r=>(service==='All Services'||r.service===service)&&r.month>=from&&r.month<=to),done=scoped.filter(r=>r.completed);
+  const scoped=baseline.rows.filter(r=>String(r.pic||'').replace(/\s+/g,'').toUpperCase()!=='JIAWEN'&&(service==='All Services'||r.service===service)&&r.month>=from&&r.month<=to),done=scoped.filter(r=>r.completed);
   await expect(page.locator('#timelineTaskCount')).toHaveText(String(done.length));
+  await expect(page.locator('#timelinePicCount')).toHaveText(String(new Set(done.map(r=>r.pic).filter(p=>p&&p!=='UNASSIGNED')).size));
+  await expect(page.locator('#chart [data-pic="JIA WEN"]')).toHaveCount(0);
   const cells=await page.locator('.company-timeline tbody tr').evaluateAll(trs=>trs.flatMap(tr=>[...tr.querySelectorAll('.timeline-cell')].map(c=>({company:tr.dataset.company,pic:tr.dataset.pic,service:tr.dataset.service,month:c.dataset.month,count:Number(c.dataset.count)}))));
   expect([...new Set(cells.map(c=>c.company))].sort()).toEqual([...new Set(scoped.map(r=>r.company))].sort());
   for(const c of cells)expect(c.count).toBe(done.filter(r=>r.company===c.company&&r.pic===c.pic&&r.service===c.service&&r.month===c.month).length);
