@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "currentId": "1b18c54e-cdb9-4830-b539-dedfda285aeb",
+  "versions": [
+    {
+      "id": "0d9a3dde-6811-4c02-bd43-4c6cd115ee79",
+      "fileName": "KPI Status 22.10.2026.xlsx",
+      "createdAt": "2026-10-22T08:37:01.117Z",
+      "sha256": null,
+      "byteLength": null
+    },
+    {
+      "id": "1b18c54e-cdb9-4830-b539-dedfda285aeb",
+      "fileName": "KPI_Status_23.10.2026_DEMO_V2.xlsx",
+      "createdAt": "2026-10-26T06:18:45.914Z",
+      "sha256": null,
+      "byteLength": null
+    }
+  ]
+}
