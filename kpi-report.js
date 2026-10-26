@@ -93,7 +93,7 @@
     const visiblePics=data.pics.slice(0,8);
     if(!visiblePics.length) { text('No assigned PIC records in this month range.',42,hy); hy+=18; }
     else {
-      visiblePics.forEach(p=>{const period=p.min!==undefined?monthLabel(p.min)+' - '+monthLabel(p.max):'-';text(p.name,42,hy,10,'#173758',true,125);text(period,180,hy,10,'#173758',false,155);text(p.completed,360,hy);line(hy+8);hy+=21;});
+      visiblePics.forEach(p=>{const period=p.min!==undefined?monthLabel(p.min)+' - '+monthLabel(p.max):'-';text(p.name,42,hy,10,'#173758',true,125);text(period,180,hy,10,'#173758',false,155);text(p.completed,360,hy);line(hy+10);hy+=22;});
       hy+=4;
       const best=data.pics[0];
       text('Who did the most tasks: '+best.name+' ('+best.completed+' of '+best.total+' assigned), all services.',42,hy,9,'#12956d',true,520);
@@ -107,7 +107,7 @@
     hy+=20;
     if(!data.risks.length) { text('No delayed tasks in the selected month range.',42,hy,11,'#12956d'); hy+=22; }
     else {
-      data.risks.slice(0,5).forEach(c=>{const color=c.risk==='High'?'#ca3147':c.risk==='Medium'?'#a96700':'#346886';text(c.name,42,hy,9,'#173758',true,300);text([...c.services].sort().join(', '),42,hy+11,8,'#63758b',false,300);text(c.delayed+' / '+c.total,355,hy,9);text(percent(c.delayed,c.total),415,hy,9);text(c.risk,505,hy,9,color,true);line(hy+17);hy+=30;});
+      data.risks.slice(0,5).forEach(c=>{const color=c.risk==='High'?'#ca3147':c.risk==='Medium'?'#a96700':'#346886';text(c.name,42,hy,9,'#173758',true,300);text([...c.services].sort().join(', '),42,hy+11,8,'#63758b',false,300);text(c.delayed+' / '+c.total,355,hy,9);text(percent(c.delayed,c.total),415,hy,9);text(c.risk,505,hy,9,color,true);line(hy+19);hy+=32;});
       text(data.risks.length>5?'Top 5 of '+data.risks.length+' companies with delays shown.':'All '+data.risks.length+' companies with delays shown. Ranked by delayed percentage, then delayed quantity: High ≥50%; Medium ≥25% to <50%; Low >0% to <25%.',32,hy+2,8,'#63758b');
       hy+=16;
     }
@@ -119,18 +119,18 @@
     else {
       const topService=data.serviceRisks[0];
       text('Service',42,hy,9,'#63758b',true);text('Delayed',355,hy,9);text('Percentage',430,hy,9);text('Focus',505,hy,9);
-      hy+=6;line(hy);hy+=12;
-      data.serviceRisks.forEach((s,i)=>{const color=i===0?'#ca3147':s.rate>=.25?'#a96700':'#346886';text(s.name,42,hy,10,'#173758',true,290);text(s.delayed+' / '+s.total,355,hy,9);text(percent(s.delayed,s.total),430,hy,9);text(i===0?'Needs focus':s.rate>=.25?'Watch':'Low',505,hy,9,color,true);line(hy+13);hy+=20;});
-      hy+=6;
+      hy+=6;line(hy);hy+=14;
+      data.serviceRisks.forEach((s,i)=>{const color=i===0?'#ca3147':s.rate>=.25?'#a96700':'#346886';text(s.name,42,hy,10,'#173758',true,290);text(s.delayed+' / '+s.total,355,hy,9);text(percent(s.delayed,s.total),430,hy,9);text(i===0?'Needs focus':s.rate>=.25?'Watch':'Low',505,hy,9,color,true);line(hy+11);hy+=24;});
+      hy+=8;
       text('Most focus needed: '+topService.name+' ('+percent(topService.delayed,topService.total)+' delayed).',32,hy,10,'#173758',true,520);
-      hy+=18;
-      text('Affected companies: '+[...topService.companies].sort().join(', '),42,hy,9,'#63758b',false,531);
       hy+=16;
+      text('Affected companies: '+[...topService.companies].sort().join(', '),42,hy,9,'#63758b',false,531);
+      hy+=14;
       text('Percentage = delayed tasks / total assigned tasks. Address the highest percentage service first.',32,hy,8,'#63758b');
-      hy+=26;
+      hy+=18;
     }
-    line(hy);
-    text('KPI Dashboard | Summary Report',32,hy+17,8,'#63758b');text('1 / 1',535,hy+17,8);
+    line(Math.min(hy,788));
+    text('KPI Dashboard | Summary Report',32,Math.min(hy,788)+19,8,'#63758b');text('1 / 1',535,Math.min(hy,788)+19,8);
     if(url) URL.revokeObjectURL(url); url=URL.createObjectURL(pdf([canvas]));
     const link=dialog.querySelector('#reportDownload');link.href=url;link.download='KPI-Summary-'+from+'-to-'+to+'.pdf';
     dialog.querySelector('#reportPages').innerHTML='<img alt="KPI summary report: PIC completion analysis, company risk priorities and service delay focus" src="'+canvas.toDataURL('image/png')+'">';
