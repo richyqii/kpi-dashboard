@@ -8,6 +8,16 @@ export async function storeDocument(env, id, bytes) {
   }
   await env.DB.batch(statements);
 }
+export async function documentBytes(env, id) {
+  const document = await query(env, 'SELECT * FROM kpi_documents WHERE id = ?', id).first();
+  if (!document) throw new Error('Document not retained.');
+  const chunks = await query(env, 'SELECT bytes FROM kpi_document_chunks WHERE document_id = ? ORDER BY chunk_index', id).all();
+  const bytes = new Uint8Array(document.byte_length);
+  let offset = 0;
+  for (const chunk of chunks.results) { const part = new Uint8Array(chunk.bytes); bytes.set(part, offset); offset += part.length; }
+  if (offset !== bytes.length) throw new Error('Incomplete document storage.');
+  return bytes;
+}
 export async function documentRoute(request, env) {
   const path = new URL(request.url).pathname;
   const json = value => Response.json(value, { headers: { 'Cache-Control': 'no-store' } });
@@ -25,13 +35,9 @@ export async function documentRoute(request, env) {
   const version = await query(env, 'SELECT * FROM kpi_versions WHERE id = ?', match[1]).first();
   if (!version) return Response.json({ error: 'Version not found.' }, { status: 404 });
   if (match[2] === 'snapshot') return json({ id: version.id, fileName: version.filename, createdAt: version.created_at, rows: JSON.parse(version.rows_json) });
-  const document = await query(env, 'SELECT * FROM kpi_documents WHERE id = ?', version.id).first();
+  const document = await query(env, 'SELECT sha256 FROM kpi_documents WHERE id = ?', version.id).first();
   if (!document) return Response.json({ error: 'The original Excel file was not retained for this older version.' }, { status: 404 });
-  const chunks = await query(env, 'SELECT bytes FROM kpi_document_chunks WHERE document_id = ? ORDER BY chunk_index', version.id).all();
-  const bytes = new Uint8Array(document.byte_length);
-  let offset = 0;
-  for (const chunk of chunks.results) { const part = new Uint8Array(chunk.bytes); bytes.set(part, offset); offset += part.length; }
-  if (offset !== bytes.length) throw new Error('Incomplete document storage.');
+  const bytes = await documentBytes(env, version.id);
   return new Response(bytes, { headers: { 'Content-Type': 'application/octet-stream', 'Cache-Control': 'no-store', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(version.filename)}`, 'X-Content-SHA256': document.sha256 } });
 }
 export function removeUnusedDocuments(env) {

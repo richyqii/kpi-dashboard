@@ -45,7 +45,7 @@ async function saveDraft(env, active, fileName, input, kind = 'upload', restored
   sizeCheck({ input, result });
   await query(env, 'DELETE FROM kpi_drafts WHERE expires_at < ?', Date.now()).run();
   await removeUnusedDocuments(env);
-  await query(env, 'INSERT INTO kpi_drafts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', draft.id, draft.baseId, fileName, draft.createdAt, draft.expiresAt, kind, restoredFrom, JSON.stringify(input), JSON.stringify(result)).run();
+  await query(env, 'INSERT INTO kpi_drafts (id, base_id, filename, created_at, expires_at, kind, restored_from, input_json, result_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', draft.id, draft.baseId, fileName, draft.createdAt, draft.expiresAt, kind, restoredFrom, JSON.stringify(input), JSON.stringify(result)).run();
   return { ...draft, ...result, warnings: [...warnings, ...(result.warnings || [])], rows: undefined };
 }
 export async function api(request, env) {
