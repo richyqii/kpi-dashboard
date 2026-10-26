@@ -750,7 +750,6 @@
             <label for="toDate">To</label>
             <input class="date-input" id="toDate" type="month">
           </div>
-          <div class="date-summary" id="dateSummary"></div>
         </div>
       </div>
       <div class="status-metrics">
@@ -1098,7 +1097,6 @@ document.getElementById("serviceBreakdown").innerHTML =
       if (fromInput.value > toInput.value) toInput.value = fromInput.value;
       const from = fromInput.value;
       const effectiveTo = toInput.value;
-      document.getElementById("dateSummary").textContent = `${monthLabel(from)} to ${monthLabel(effectiveTo)} (inclusive)`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
       renderServiceBreakdown(months);
