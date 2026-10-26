@@ -955,24 +955,28 @@
         const group = groups.get(key); group.counts.set(row.month, (group.counts.get(row.month) || 0) + 1); group.total++;
       }
       const pics = new Set(rows.map(row => row.pic).filter(pic => pic && pic !== "UNASSIGNED"));
-      const palette = { Accounting: "#daf4e8", Payroll: "#deecff", "E-Invoice": "#fff0d2", SST: "#eee5ff" };
+      const picColours = { "LING YIN": "#dbeafe", "YOONG SHI": "#dcfce7", "JIA WEN": "#fef3c7", "IZA": "#ede9fe", "YEOH": "#fce7f3", "UNASSIGNED": "#e2e8f0" };
+      const otherPics = [...new Set(activeDashboardCompanyData.map(row => row.pic || "UNASSIGNED"))].filter(pic => !picColours[pic]).sort();
+      otherPics.forEach((pic, index) => { picColours[pic] = 'hsl(' + ((index * 137.508 + 18) % 360) + ' 65% 85%)'; });
+      const colourForPic = pic => picColours[pic] || picColours.UNASSIGNED;
+      const picSwatch = pic => '<span aria-hidden="true" style="display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;background:' + colourForPic(pic) + ';border:1px solid #0002"></span>';
       let content = '<div class="timeline-stats"><div>PICs Involved<strong id="timelinePicCount">' + pics.size + '</strong></div><div>PIC Completed Tasks<strong id="timelineTaskCount">' + rows.length + '</strong></div></div>';
       if (!groups.size) { chart.innerHTML = content + '<p class="timeline-empty">No tasks recorded for the selected service and months.</p>'; return; }
       content += '<div class="company-timeline-scroll"><table class="company-timeline"><caption>Company PIC Work Timeline - ' + escapeHtml(timelineService) + ' - All Companies</caption><thead><tr><th scope="col">Company / PIC / Service</th>' + months.map(month => '<th scope="col">' + escapeHtml(chartMonthLabel(month)) + '</th>').join('') + '</tr></thead><tbody>';
       for (const group of [...groups.values()].sort((a,b) => a.company.localeCompare(b.company) || a.pic.localeCompare(b.pic) || a.service.localeCompare(b.service))) {
         const name = group.pic.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-        content += '<tr data-company="' + escapeHtml(group.company) + '" data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(group.company) + '<small>' + escapeHtml(name) + ' - ' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
+        content += '<tr data-company="' + escapeHtml(group.company) + '" data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(group.company) + '<small>' + picSwatch(group.pic) + escapeHtml(name) + ' - ' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
         for (const month of months) {
           const count = group.counts.get(month) || 0;
-          content += '<td><span class="timeline-cell' + (count ? ' has-work' : '') + '" data-month="' + month + '" data-count="' + count + '" style="' + (count ? 'background:' + palette[group.service] : '') + '" title="' + escapeHtml(name + ' - ' + group.service + ' - ' + chartMonthLabel(month) + ': ' + count + ' completed tasks') + '">' + (count || '-') + '</span></td>';
+          content += '<td><span class="timeline-cell' + (count ? ' has-work' : '') + '" data-month="' + month + '" data-count="' + count + '" style="' + (count ? 'background:' + colourForPic(group.pic) : '') + '" title="' + escapeHtml(name + ' - ' + group.service + ' - ' + chartMonthLabel(month) + ': ' + count + ' completed tasks') + '">' + (count || '-') + '</span></td>';
         }
         content += '</tr>';
       }
-      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. Counts include all companies for the selected service and month range.</p>';
+      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Each PIC has a different colour. Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. Counts include all companies for the selected service and month range.</p>';
       const totals = new Map();
       for (const row of scopedRows) if (row.pic && row.pic !== "UNASSIGNED") totals.set(row.pic, totals.get(row.pic) || 0);
       for (const row of rows) totals.set(row.pic || "UNASSIGNED", (totals.get(row.pic || "UNASSIGNED") || 0) + 1);
-      chart.insertAdjacentHTML('beforeend', '<section class="timeline-pic-totals"><h3>Total Tasks Completed by PIC</h3><p class="timeline-note">All companies, selected service and months. Boss-completed tasks are excluded.</p><table id="timelinePicTotals"><thead><tr><th scope="col">PIC</th><th scope="col">Completed Tasks</th></tr></thead><tbody>' + [...totals].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0])).map(([pic,count]) => '<tr data-pic="' + escapeHtml(pic) + '"><th scope="row">' + escapeHtml(pic) + '</th><td>' + count + '</td></tr>').join('') + '</tbody><tfoot><tr><th scope="row">Total</th><td>' + rows.length + '</td></tr></tfoot></table></section>');
+      chart.insertAdjacentHTML('beforeend', '<section class="timeline-pic-totals"><h3>Total Tasks Completed by PIC</h3><p class="timeline-note">All companies, selected service and months. Boss-completed tasks are excluded.</p><table id="timelinePicTotals"><thead><tr><th scope="col">PIC</th><th scope="col">Completed Tasks</th></tr></thead><tbody>' + [...totals].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0])).map(([pic,count]) => '<tr data-pic="' + escapeHtml(pic) + '"><th scope="row">' + picSwatch(pic) + escapeHtml(pic) + '</th><td>' + count + '</td></tr>').join('') + '</tbody><tfoot><tr><th scope="row">Total</th><td>' + rows.length + '</td></tr></tfoot></table></section>');
     }
     function renderPicSummary(months) {
       const panel = document.getElementById("picSummary");

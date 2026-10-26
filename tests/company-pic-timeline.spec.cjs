@@ -3,12 +3,16 @@ test('service-only timeline includes every company and reconciles PIC totals',as
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/current',route=>route.fulfill({json:{rows:baseline.rows,version:{id:'test',fileName:baseline.fileName,createdAt:baseline.createdAt}}}));
  await page.goto('/');await expect(page.locator('#excelUpload')).toBeEnabled();await expect(page.locator('#companySelect')).toHaveCount(0);await expect(page.locator('#companySearch')).toHaveCount(0);
+ const picColours=new Map();
  const verify=async(service,from='2026-01',to='2026-12')=>{
   const scoped=baseline.rows.filter(r=>(service==='All Services'||r.service===service)&&r.month>=from&&r.month<=to),done=scoped.filter(r=>r.completed);
   await expect(page.locator('#timelineTaskCount')).toHaveText(String(done.length));
   const cells=await page.locator('.company-timeline tbody tr').evaluateAll(trs=>trs.flatMap(tr=>[...tr.querySelectorAll('.timeline-cell')].map(c=>({company:tr.dataset.company,pic:tr.dataset.pic,service:tr.dataset.service,month:c.dataset.month,count:Number(c.dataset.count)}))));
   expect([...new Set(cells.map(c=>c.company))].sort()).toEqual([...new Set(scoped.map(r=>r.company))].sort());
   for(const c of cells)expect(c.count).toBe(done.filter(r=>r.company===c.company&&r.pic===c.pic&&r.service===c.service&&r.month===c.month).length);
+  const coloured=await page.locator('.company-timeline tbody tr').evaluateAll(trs=>trs.flatMap(tr=>[...tr.querySelectorAll('.has-work')].map(cell=>({pic:tr.dataset.pic,colour:cell.style.background}))));
+  for(const item of coloured){if(picColours.has(item.pic))expect(item.colour).toBe(picColours.get(item.pic));else picColours.set(item.pic,item.colour);}
+  expect(new Set(picColours.values()).size).toBe(picColours.size);
   const totals=await page.locator('#timelinePicTotals tbody tr').evaluateAll(trs=>trs.map(tr=>({pic:tr.dataset.pic,count:Number(tr.querySelector('td').textContent)})));
   expect(totals.reduce((n,r)=>n+r.count,0)).toBe(done.length);
   for(const item of totals)expect(item.count).toBe(done.filter(r=>r.pic===item.pic).length);
