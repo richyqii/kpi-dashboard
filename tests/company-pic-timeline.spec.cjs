@@ -25,7 +25,7 @@ test('company timeline shows actual PIC/service monthly quantities and no keywor
  }
  const company=companies[0];await page.locator('#companySelect').selectOption(company);
  const initial=await page.locator('#chart').innerHTML();
- await page.locator('#serviceTabs').selectOption('Accounting');expect(await page.locator('#chart').innerHTML()).toBe(initial);
+ await expect(page.locator('.filters')).toHaveCount(0);await expect(page.getByRole('button',{name:'Select All',exact:true})).toHaveCount(0);expect(await page.locator('#chart').innerHTML()).toBe(initial);
  await page.locator('#fromDate').fill('2026-03');await page.locator('#fromDate').dispatchEvent('change');
  await page.locator('#toDate').fill('2026-05');await page.locator('#toDate').dispatchEvent('change');
  const rows=baseline.rows.filter(r=>r.company===company&&r.completed&&r.month>='2026-03'&&r.month<='2026-05');

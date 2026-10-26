@@ -762,7 +762,6 @@
                 <span>Completion<br>Rate</span>
               </div>
             </div>
-            <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
           </div>
           <details class="completion-calc-box"><summary>Completion rate calculation</summary>
             <div class="completion-calc-label">Complete Rate Calculation</div>
@@ -785,17 +784,6 @@
         <span>Tick, Closing or PIC initials: <strong>PIC Completed</strong> &middot; Dash: <strong>Boss Completed</strong> &middot; Empty cells (any colour): <strong>Pending or Delayed based on the selected To month</strong>.</span>
         <span>Overall Status Chart always counts every PIC and service. Monthly Status Trend shows PIC completed tasks only. Completion rate counts PIC Completed and Boss Completed tasks.</span>
       </div>
-    </section>
-
-    <section class="panel filters" aria-label="Dashboard filters">
-      <div class="selection-bar">
-        <div class="selection-field"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3H5Z"/><path d="M9 15h6"/></svg></span><div class="selection-control"><label for="picTabs">PIC</label><select id="picTabs" class="selection-dropdown"></select></div></div>
-        <div class="selection-field"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M9 6V3h6v3M4 12h16M10 12v3h4v-3"/></svg></span><div class="selection-control"><label for="serviceTabs">Service</label><select id="serviceTabs" class="selection-dropdown"></select></div></div>
-        <div class="selection-field" id="roleRow"><span class="selection-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v2"/></svg></span><div class="selection-control"><label for="roleTabs">Role</label><select id="roleTabs" class="selection-dropdown" aria-describedby="roleHelp"></select></div></div>
-        <button type="button" id="clearFilters" class="clear-filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v7l-4 2v-9L3 4Z"/><path d="m17 17 4 4m0-4-4 4"/></svg>Clear Filters</button>
-      </div>
-      <p id="roleHelp" class="selection-help">Reviewer role applies to Accounting. E-Invoice type options appear when E-Invoice is selected.</p>
-      <div class="filter-row" id="invoiceTypeRow"><div class="filter-label">E-Invoice Type</div><div class="tabs" id="invoiceTypeTabs"></div></div>
     </section>
 
     <p class="pending-note" id="pendingTaskNote" aria-live="polite"></p>
@@ -1118,20 +1106,10 @@ document.getElementById("serviceBreakdown").innerHTML =
       document.getElementById("currentFileName").textContent = `Current file: ${fileName}`;
       render();
     }
-    document.getElementById("clearFilters").addEventListener("click", () => {
-      Object.assign(state, { pic: "Unassigned", service: "All Services", role: "All Roles", invoiceType: "All Types", company: "All Companies", detailCompany: "All Companies", trendFocus: null });
-      render();
-    });
     window.KpiDashboard = { apply: applySavedDataset };
     setInterval(() => { if (!document.hidden) render(); }, 30000);
     function render() {
-      buildTabs("serviceTabs", ["All Services", ...services], "service");
-      buildTabs("picTabs", ["All PICs", ...pics], "pic");
-      buildTabs("roleTabs", ["All Roles", ...roles], "role");
       if (!availableEInvoiceTypes().includes(state.invoiceType)) state.invoiceType = "All Types";
-      buildTabs("invoiceTypeTabs", availableEInvoiceTypes(), "invoiceType");
-      document.getElementById("roleTabs").disabled = state.service !== "Accounting";
-      document.getElementById("invoiceTypeRow").style.display = state.service === "E-Invoice" ? "grid" : "none";
 
       const currentMonth = KpiCore.currentMonth();
       const fromInput = document.getElementById("fromDate");
@@ -1195,7 +1173,6 @@ document.getElementById("serviceBreakdown").innerHTML =
       });
 
       document.getElementById("donutNaLegend").textContent = totals["Boss Completed"];
-      document.getElementById("selectAllStatusButton").classList.toggle("active", !state.trendFocus);
       document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
       document.getElementById("donutAssignedLegend").textContent = donutTotal + pending;
       document.getElementById("donutCompleteLegend").textContent = totals.Completed;
@@ -1242,7 +1219,6 @@ document.getElementById("serviceBreakdown").innerHTML =
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-    document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
     document.getElementById("timelineServiceSelect").addEventListener("change", event => { timelineService = event.target.value; render(); });
     document.getElementById("companySelect").addEventListener("change", event => {
