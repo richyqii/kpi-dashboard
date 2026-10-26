@@ -168,6 +168,14 @@
       background: #fff;
       font: inherit;
     }
+    .date-summary {
+      padding: 9px 12px;
+      border-radius: 8px;
+      color: #23466f;
+      background: #edf5ff;
+      font-size: 13px;
+      font-weight: 650;
+    }
     .rules {
       margin-top: 14px;
       padding: 12px 14px;
@@ -432,6 +440,24 @@
       color: var(--ink);
       font-size: 18px;
     }
+    .status-select-all {
+      cursor: pointer;
+      width: 100%;
+      border: 1px solid #cbd9eb;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: #23466f;
+      background: #edf5ff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+    }
+    .status-select-all.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
     .company-detail-panel {
       margin-top: 14px;
       padding: 14px;
@@ -682,7 +708,7 @@
       .status-donut { margin: 0 auto; }
     }
   </style>
-  <link rel="stylesheet" href="kpi-header.css?v=20261024a">
+  <link rel="stylesheet" href="kpi-header.css?v=20261023h">
 </head>
 <body>
   <header>
@@ -800,7 +826,7 @@
     </section>
 
     <section class="breakdown-section" aria-label="Service and company overview">
-      <p class="sub breakdown-scope">Service Breakdown: all reporting months and all assignments.</p>
+      <p class="sub breakdown-scope">Selected month range &middot; All PICs, roles and invoice types</p>
       <div class="breakdown-grid">
         <section class="panel service-breakdown-panel">
           <div class="breakdown-head"><h2>Service Breakdown</h2><select id="breakdownMetric" aria-label="Service breakdown metric"><option value="completed">By Completion Rate</option><option value="delay">By Delay Rate</option></select></div>
@@ -1018,19 +1044,21 @@
       });
       return [...groups.values()];
     }
-    function renderServiceBreakdown() {
-      // This overview always uses the entire saved file, never dashboard filters.
-      const rows = activeDashboardCompanyData;
-      const reportingCutoff = rows.reduce((latest, row) => row.month > latest ? row.month : latest, "");
+    function renderServiceBreakdown(months) {
+      const selectedMonths = new Set(months);
+      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month));
       const keys = ["completed", "delay", "notApplicable"];
       const labels = ["PIC Completed", "Delayed", "Boss Completed"];
       const fills = ["#19a477", "#df5a62", "#3984c6"];
       const metric = document.getElementById("breakdownMetric").value;
+      const visibleServices = state.service === "All Services"
+  ? services
+  : [state.service];
 
 document.getElementById("serviceBreakdown").innerHTML =
-  services.map(service => {
+  visibleServices.map(service => {
         const counts = Object.fromEntries(keys.map(key => [key, 0]));
-        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, reportingCutoff); if (status in counts) counts[status]++; });
+        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value); if (status in counts) counts[status]++; });
         const total = keys.reduce((sum, key) => sum + counts[key], 0);
         const active = total;
         const rate = active ? ((metric === "completed" ? counts.completed + counts.notApplicable : counts.delay) / active * 100).toFixed(1) + "%" : "\u2014";
@@ -1071,7 +1099,7 @@ document.getElementById("serviceBreakdown").innerHTML =
       const effectiveTo = toInput.value;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
-      renderServiceBreakdown();
+      renderServiceBreakdown(months);
      const companyRows = filteredCompanyRows();
 
     console.log("=== OVERALL KPI FILTER DEBUG ===");
@@ -1082,6 +1110,7 @@ document.getElementById("serviceBreakdown").innerHTML =
     console.log("Filtered rows:", companyRows.length);
     console.log("Total rows:", activeDashboardCompanyData.length);
     console.log("First filtered record:", companyRows[0]);
+
       const statusRows = rollupCompanyMonthStatus(activeDashboardCompanyData, months);
       const pending = 0;
       document.getElementById("pendingTaskNote").textContent = "The selected To month is the cutoff: empty tasks through that month are Delayed; later months are Not Yet Due.";
@@ -1155,6 +1184,12 @@ document.getElementById("serviceBreakdown").innerHTML =
       state.trendFocus = state.trendFocus === focus ? null : focus;
       state.detailCompany = "All Companies";
       state.company = "All Companies";
+      state.trendOpen = true;
+      render();
+      document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function selectAllStatuses() {
+      state.trendFocus = null;
       state.trendOpen = true;
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
