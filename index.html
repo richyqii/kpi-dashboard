@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="canonical" href="https://kpi-dashboard.vin8228.workers.dev/?v=20261023a">
+  <link rel="canonical" href="https://kpi-dashboard.vin8228.workers.dev/?v=20260611a">
   <title>KPI Dashboard</title>
-  <link rel="stylesheet" href="kpi-upload.css?v=20261023a">
+  <link rel="stylesheet" href="kpi-upload.css?v=20261019b">
   <style>
     :root {
       --navy: #102b4e;
@@ -167,6 +167,14 @@
       color: var(--ink);
       background: #fff;
       font: inherit;
+    }
+    .date-summary {
+      padding: 9px 12px;
+      border-radius: 8px;
+      color: #23466f;
+      background: #edf5ff;
+      font-size: 13px;
+      font-weight: 650;
     }
     .rules {
       margin-top: 14px;
@@ -432,6 +440,24 @@
       color: var(--ink);
       font-size: 18px;
     }
+    .status-select-all {
+      cursor: pointer;
+      width: 100%;
+      border: 1px solid #cbd9eb;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: #23466f;
+      background: #edf5ff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+    }
+    .status-select-all.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
     .company-detail-panel {
       margin-top: 14px;
       padding: 14px;
@@ -682,7 +708,7 @@
       .status-donut { margin: 0 auto; }
     }
   </style>
-  <link rel="stylesheet" href="kpi-header.css?v=20261024a">
+  <link rel="stylesheet" href="kpi-header.css?v=20261019a">
 </head>
 <body>
   <header>
@@ -692,7 +718,7 @@
     </div>
     <div class="header-actions">
       <div class="upload-actions">
-        <span class="last-updated" id="lastUpdated">Loading saved versionâ€¦</span>
+        <span class="last-updated" id="lastUpdated">Loading saved version…</span>
         <button type="button" class="revert-button" id="versionHistory">Version History</button>
         <label class="upload-button" for="excelUpload">Upload Document</label>
         <input id="excelUpload" type="file" accept=".xlsx,.xls" hidden>
@@ -703,8 +729,8 @@
     <svg class="file-icon" viewBox="0 0 40 44" fill="none" aria-hidden="true"><path d="M10 2h20l8 8v30a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" fill="#15803d"/><path d="M29 2v9h9" fill="#86efac"/><rect x="2" y="13" width="22" height="24" rx="3" fill="#166534"/><path d="m8 20 10 10m0-10L8 30" stroke="white" stroke-width="2.5"/><path d="M28 17h5m-5 7h5m-5 7h5" stroke="white" stroke-width="2"/></svg>
     <div class="file-strip-content">
       <div class="file-strip-heading"><div class="current-file" id="currentFileName">Current file: 2. 4 Main Services KPI Checklist 2025 &amp; 2026-1.xlsx</div><span class="active-file-badge" id="activeFileBadge" hidden>Active</span></div>
-      <div class="file-version-meta" id="fileVersionMeta">Loading saved file detailsâ€¦</div>
-      <div class="upload-status" id="uploadStatus" role="status">Loading the saved shared baselineâ€¦</div>
+      <div class="file-version-meta" id="fileVersionMeta">Loading saved file details…</div>
+      <div class="upload-status" id="uploadStatus" role="status">Loading the saved shared baseline…</div>
     </div>
   </section>
 
@@ -723,6 +749,7 @@
             <label for="toDate">To</label>
             <input class="date-input" id="toDate" type="month">
           </div>
+          <div class="date-summary" id="dateSummary"></div>
         </div>
       </div>
       <div class="status-metrics">
@@ -735,6 +762,7 @@
                 <span>Completion<br>Rate</span>
               </div>
             </div>
+            <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
           </div>
           <details class="completion-calc-box"><summary>Completion rate calculation</summary>
             <div class="completion-calc-label">Complete Rate Calculation</div>
@@ -781,6 +809,9 @@
           <div class="legend">
             <span><i class="dot" style="background:var(--green)"></i>PIC Completed</span>
           </div>
+          <div class="chart-tools">
+            <div class="chart-total"><span>PIC Completed</span><strong id="chartCompletedTotal">0</strong></div>
+          </div>
           <div class="company-detail-panel" id="companyDetailPanel">
             <div class="company-detail-tools">
               <div>
@@ -788,7 +819,7 @@
                 <div class="company-detail-title" id="companyDetailTitle"></div>
               </div>
             </div>
-            <div class="company-selection-bar"><label>Search company<input id="companySearch" type="search" placeholder="Type a company keyword" autocomplete="off"><div id="companySearchResults" class="company-search-results" hidden><div class="company-search-heading">Related keyword</div><div id="companySearchMatches" class="company-search-matches"></div></div></label><label>Select company<select id="companySelect"></select></label><span id="companySearchCount" role="status"></span></div>
+            <div class="company-selection-bar"><label>Search company<input id="companySearch" type="search" placeholder="Type a company keyword"></label><label>Select company<select id="companySelect"></select></label><span id="companySearchCount" role="status"></span></div>
           </div>
           <div class="chart" id="chart"></div>
         </div>
@@ -800,28 +831,22 @@
       <div class="pic-summary-head"><h2 id="picSummaryHeading">PIC Summary</h2><strong id="picSummaryName"></strong></div>
       <p class="sub" id="picSummaryScope"></p>
       <div class="pic-summary-overview"><dl id="picSummaryFacts"></dl><div class="pic-summary-donut" id="picSummaryDonut" role="img"><div><strong id="picSummaryRate"></strong><span>Completion<br>Rate</span></div></div></div>
-    </section>
-
-    <section class="panel pic-summary-panel" id="overallDelayPanel" aria-label="Overall delayed tasks">
-      <div class="pic-summary-head"><h2>Companies with Delayed Tasks</h2><select id="overallDelayLimit" aria-label="Company delay limit"><option value="5">Top 5 Companies</option><option value="10">Top 10 Companies</option><option value="all">All Companies</option></select><strong id="overallDelayLabel"></strong></div>
-      <p class="sub">All PICs and services for the selected months &middot; not filtered by PIC</p>
-      <div class="overall-delay-visual"><i></i><div class="pic-breakdown-track"><div id="overallDelayBar" style="background:#df5a62;width:0"></div></div></div>
-      <div class="pic-delay-table-wrap"><table class="pic-delay-table"><thead><tr><th scope="col">Company</th><th scope="col">Service</th><th scope="col">Delayed Months</th><th scope="col">Delayed Tasks</th></tr></thead><tbody id="picDelayedCompanies"></tbody></table></div>
+      <h3 class="pic-breakdown-title">Status Breakdown</h3><div id="picSummaryBreakdown"></div>
+      <h3 class="pic-breakdown-title">Companies with Delayed Tasks</h3><div class="pic-delay-table-wrap"><table class="pic-delay-table"><thead><tr><th scope="col">Company</th><th scope="col">Service</th><th scope="col">Delayed Months</th><th scope="col">Delayed Tasks</th></tr></thead><tbody id="picDelayedCompanies"></tbody></table></div>
     </section>
 
     <section class="breakdown-section" aria-label="Service and company overview">
-      <p class="sub breakdown-scope">Service Breakdown: all reporting months and all assignments. PIC Efficiency Comparison: selected month range.</p>
+      <p class="sub breakdown-scope">Selected month range &middot; All PICs, roles and invoice types</p>
       <div class="breakdown-grid">
         <section class="panel service-breakdown-panel">
           <div class="breakdown-head"><h2>Service Breakdown</h2><select id="breakdownMetric" aria-label="Service breakdown metric"><option value="completed">By Completion Rate</option><option value="delay">By Delay Rate</option></select></div>
           <div id="serviceBreakdown"></div>
-          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>PIC Completed</span><span><i style="background:var(--red)"></i>Delayed</span><span><i style="background:#3984c6"></i>Boss Completed</span></div>
+          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>PIC Completed</span><span><i style="background:var(--red)"></i>Delayed</span><span><i style="background:#95a1b2"></i>Not Yet Due</span><span><i style="background:#3984c6"></i>Boss Completed</span></div>
+          <p class="sub">Completion rate is PIC Completed divided by all assigned tasks.</p>
         </section>
-        <section class="panel pic-efficiency-panel">
-          <div class="breakdown-head"><h2>PIC Efficiency Comparison</h2></div>
-          <div id="picEfficiency"></div>
-          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>PIC Completed</span></div>
-          <p class="sub">Efficiency = PIC Completed divided by all assigned tasks, ranked highest first.</p>
+        <section class="panel company-delay-panel">
+          <div class="breakdown-head"><h2>Company Delay Summary</h2><select id="delayLimit" aria-label="Company delay limit"><option value="5">Top 5 Companies</option><option value="10">Top 10 Companies</option><option value="all">All Companies</option></select></div>
+          <div class="delay-table-wrap"><table><thead><tr><th>Company</th><th>Service</th><th>Delayed Tasks</th></tr></thead><tbody id="companyDelaySummary"></tbody></table></div>
         </section>
       </div>
     </section>
@@ -839,10 +864,10 @@
   <script src="dashboard-company-data.js?v=20261019"></script>
   <script>
     const services = ["Accounting", "Payroll", "E-Invoice", "SST"];
-    let pics = ["Yoong Shi", "Ling Yin", "Iza", "Unassigned"];
+    let pics = ["Yoong Shi", "Jia Wen", "Ling Yin", "Iza"];
     const roles = ["Main Reviewer", "Sub Reviewer"];
     const eInvoiceTypes = ["Billed", "Self-bill"];
-    const state = { service: "All Services", pic: "Unassigned", role: "All Roles", invoiceType: "All Types", company: "All Companies", detailCompany: "All Companies", trendOpen: true, trendFocus: null };
+   const state = { service: "All Services", pic: "Unassigned", role: "All Roles", invoiceType: "All Types", company: "All Companies", detailCompany: "All Companies", trendOpen: true, trendFocus: null };
     const colors = { Completed: "#19a477", Delay: "#df5a62", "Not Yet Due": "#95a1b2", "Boss Completed": "#3984c6" };
     const statuses = [
       { key: "Completed", label: "PIC Completed", focus: "complete" },
@@ -929,24 +954,6 @@
       if (!values.includes(state.detailCompany)) values.push(state.detailCompany);
       document.getElementById("companySelect").replaceChildren(...values.map(company => new Option(company, company, false, company === state.detailCompany)));
       document.getElementById("companySearchCount").textContent = search ? matches.length + " matching companies" : availableCompanies.length + " companies";
-      const list = document.getElementById("companySearchMatches");
-      const panel = document.getElementById("companySearchResults");
-      const shown = matches.slice(0,8);
-      list.replaceChildren(...shown.map(company => {
-        const option = document.createElement("button");
-        option.type = "button";
-        option.className = "company-search-option";
-        option.textContent = company;
-        option.addEventListener("mousedown", event => { event.preventDefault(); pickCompany(company); });
-        return option;
-      }));
-      panel.hidden = !list.childElementCount;
-    }
-    function pickCompany(company) {
-      document.getElementById("companySearch").value = company;
-      state.detailCompany = company; state.company = company; state.trendOpen = true;
-      render();
-      document.getElementById("companySearchResults").hidden = true;
     }
     function buildCompanyBoxes(rows) {
       availableCompanies = [...new Set(rows.map(row => row.company))].sort((a,b) => a.localeCompare(b));
@@ -983,30 +990,22 @@
       const counts = { completed:0, notApplicable:0, delay:0, notDue:0 };
       rows.forEach(row => { const key=KpiCore.effectiveStatus(row,document.getElementById("toDate").value); if (key in counts) counts[key]++; });
       const total=rows.length, rate=total ? counts.completed/total*100 : 0;
+      const delayedCompanies=new Map();
+      rows.filter(row => KpiCore.effectiveStatus(row,document.getElementById("toDate").value)==="delay").forEach(row=>{
+        if(!delayedCompanies.has(row.company)) delayedCompanies.set(row.company,{company:row.company,services:new Set(),months:new Set(),count:0});
+        const item=delayedCompanies.get(row.company);item.services.add(row.service);item.months.add(row.month);item.count++;
+      });
+      const ranked=[...delayedCompanies.values()].sort((a,b)=>b.count-a.count||a.company.localeCompare(b.company));
+      document.getElementById("picDelayedCompanies").innerHTML=ranked.length?ranked.map(item=>'<tr><td>'+escapeHtml(item.company)+'</td><td>'+escapeHtml([...item.services].sort().join(', '))+'</td><td>'+escapeHtml([...item.months].sort().map(chartMonthLabel).join(', '))+'</td><td class="pic-delayed-count">'+item.count+'</td></tr>').join(''):'<tr><td colspan="4">No delayed tasks for this PIC in the selected months and filters.</td></tr>';
       document.getElementById("picSummaryName").textContent=state.pic;
       document.getElementById("picSummaryScope").textContent=monthLabel(document.getElementById("fromDate").value)+" to "+monthLabel(document.getElementById("toDate").value)+" | "+state.service+" | All assigned companies";
-      const facts=[["Assigned Companies",companyCount(rows)],["Total Tasks (selected months)",total],["PIC Completed Tasks",counts.completed],["Completion Rate",rate.toFixed(1)+"%"]];
+      const roleNames=[...new Set(rows.map(row=>row.role === "Sub" ? "Sub Reviewer" : "Main Reviewer"))];
+      const facts=[["Role",roleNames.join(", ") || "No assignments in selection"],["Assigned Companies",companyCount(rows)],["Total Tasks (selected months)",total],["Delayed Tasks",counts.delay],["Completion Rate",rate.toFixed(1)+"%"]];
       document.getElementById("picSummaryFacts").innerHTML=facts.map(([name,value])=>'<dt>'+name+'</dt><dd>'+escapeHtml(value)+'</dd>').join('');
       document.getElementById("picSummaryRate").textContent=rate.toFixed(1)+"%";
       const donut=document.getElementById("picSummaryDonut");donut.style.background='conic-gradient(#19a477 '+rate+'%, #e4eaf2 0)';donut.setAttribute('aria-label',state.pic+' completion rate '+rate.toFixed(1)+'%');
-    }
-    function renderOverallDelay(months) {
-      const selectedMonths = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month));
-      const total = rows.length;
-      const delayedCompanies = new Map();
-      rows.filter(row => KpiCore.effectiveStatus(row, document.getElementById("toDate").value) === "delay").forEach(row => {
-        if (!delayedCompanies.has(row.company)) delayedCompanies.set(row.company, { company: row.company, services: new Set(), months: new Set(), count: 0 });
-        const item = delayedCompanies.get(row.company); item.services.add(row.service); item.months.add(row.month); item.count++;
-      });
-      const delayed = [...delayedCompanies.values()].reduce((sum, item) => sum + item.count, 0);
-      const percent = total ? delayed / total * 100 : 0;
-      document.getElementById("overallDelayLabel").textContent = percent.toFixed(1) + "% delayed";
-      document.getElementById("overallDelayBar").style.width = percent.toFixed(1) + "%";
-      const ranked = [...delayedCompanies.values()].sort((a, b) => b.count - a.count || a.company.localeCompare(b.company));
-      const limit = document.getElementById("overallDelayLimit").value;
-      const visible = limit === "all" ? ranked : ranked.slice(0, Number(limit));
-      document.getElementById("picDelayedCompanies").innerHTML = visible.length ? visible.map(item => '<tr><td>' + escapeHtml(item.company) + '</td><td>' + escapeHtml([...item.services].sort().join(', ')) + '</td><td>' + escapeHtml([...item.months].sort().map(chartMonthLabel).join(', ')) + '</td><td class="pic-delayed-count">' + item.count + '</td></tr>').join('') : '<tr><td colspan="4">No delayed tasks in the selected months.</td></tr>';
+      const breakdown=[["completed","PIC Completed","#19a477"],["delay","Delayed","#df5a62"]];
+      document.getElementById("picSummaryBreakdown").innerHTML=breakdown.map(([key,label,color])=>{const percent=total?counts[key]/total*100:0;return '<div class="pic-breakdown-row" data-status="'+key+'"><span class="pic-breakdown-label"><i style="background:'+color+'"></i>'+label+'</span><strong class="pic-breakdown-count">'+counts[key]+'</strong><span>'+percent.toFixed(1)+'%</span><div class="pic-breakdown-track"><div style="width:'+percent+'%;background:'+color+'"></div></div></div>';}).join('');
     }
     function companyCount(rows) {
       return new Set(rows.map(row => row.company)).size;
@@ -1044,56 +1043,50 @@
       });
       return [...groups.values()];
     }
-    function renderServiceBreakdown() {
-      // This overview always uses the entire saved file, never dashboard filters.
-      const rows = activeDashboardCompanyData;
-      const reportingCutoff = rows.reduce((latest, row) => row.month > latest ? row.month : latest, "");
-      const keys = ["completed", "delay", "notApplicable"];
-      const labels = ["PIC Completed", "Delayed", "Boss Completed"];
-      const fills = ["#19a477", "#df5a62", "#3984c6"];
+    function renderServiceBreakdown(months) {
+      const selectedMonths = new Set(months);
+      const rows = filteredCompanyRows().filter(
+  row => selectedMonths.has(row.month)
+  );
+      const keys = ["completed", "delay", "notDue", "notApplicable"];
+      const labels = ["PIC Completed", "Delayed", "Not Yet Due", "Boss Completed"];
+      const fills = ["#19a477", "#df5a62", "#95a1b2", "#3984c6"];
       const metric = document.getElementById("breakdownMetric").value;
+      const visibleServices = state.service === "All Services"
+  ? services
+  : [state.service];
 
 document.getElementById("serviceBreakdown").innerHTML =
-  services.map(service => {
-        const counts = Object.fromEntries(keys.map(key => [key, 0]));
-        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, reportingCutoff); if (status in counts) counts[status]++; });
-        const total = keys.reduce((sum, key) => sum + counts[key], 0);
-        const active = total;
-        const rate = active ? ((metric === "completed" ? counts.completed : counts.delay) / active * 100).toFixed(1) + "%" : "\u2014";
+  visibleServices.map(service => {
         const description = labels.map((label, i) => label + ": " + counts[keys[i]]).join(", ");
         const segments = keys.map((key, i) => '<span style="width:' + (total ? counts[key] / total * 100 : 0) + '%;background:' + fills[i] + '" title="' + labels[i] + ': ' + counts[key] + '"></span>').join("");
         return '<div class="service-breakdown-row"><strong>' + escapeHtml(service) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(service + '. ' + description) + '">' + segments + '</div><strong class="service-breakdown-rate">' + rate + '</strong></div>';
       }).join("");
-    }
-    function renderPicEfficiency(months) {
-      const selectedMonths = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month) && row.pic && !["JIA WEN", "UNASSIGNED"].includes(row.pic.toUpperCase()));
-      const totals = new Map(), picDone = new Map();
+      const companies = new Map();
       rows.forEach(row => {
-        totals.set(row.pic, (totals.get(row.pic) || 0) + 1);
-        const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value);
-        if (status === "completed") picDone.set(row.pic, (picDone.get(row.pic) || 0) + 1);
+        if (KpiCore.effectiveStatus(row, document.getElementById("toDate").value) !== "delay") return;
+        if (!companies.has(row.company)) companies.set(row.company, { company: row.company, services: new Set(), count: 0 });
+        const entry = companies.get(row.company); entry.count++; entry.services.add(row.service);
       });
-      const list = [...totals.entries()].map(([pic, total]) => {
-        const completed = picDone.get(pic) || 0;
-        const rate = total ? completed / total * 100 : 0;
-        return { pic, completed, total, rate };
-      }).sort((a, b) => b.rate - a.rate || b.completed - a.completed || a.pic.localeCompare(b.pic));
-      const picLabel = pic => pic ? pic.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()) : "Unassigned";
-      document.getElementById("picEfficiency").innerHTML = list.length ? list.map(item => {
-        const detail = 'PIC Completed: ' + item.completed + ' of ' + item.total + ' assigned tasks';
-        const segments = '<span style="width:' + item.rate + '%;background:#19a477" title="' + detail + '"></span>';
-        return '<div class="service-breakdown-row"><strong>' + escapeHtml(picLabel(item.pic)) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(picLabel(item.pic) + '. ' + detail) + '">' + segments + '</div><strong class="service-breakdown-rate">' + item.rate.toFixed(1) + '%</strong></div>';
-      }).join("") : '<p class="sub">No assigned tasks in the selected month range.</p>';
+      const ranked = [...companies.values()].sort((a, b) => b.count - a.count || a.company.localeCompare(b.company));
+      const limit = document.getElementById("delayLimit").value;
+      const visible = limit === "all" ? ranked : ranked.slice(0, Number(limit));
+      document.getElementById("companyDelaySummary").innerHTML = visible.length ? visible.map(row => '<tr><td>' + escapeHtml(row.company) + '</td><td>' + escapeHtml([...row.services].sort().join(", ")) + '</td><td class="delay-task-count">' + row.count + '</td></tr>').join("") : '<tr><td colspan="3">No delayed tasks in the selected month range.</td></tr>';
     }
     document.getElementById("breakdownMetric").addEventListener("change", render);
-    document.getElementById("overallDelayLimit").addEventListener("change", render);
+    document.getElementById("delayLimit").addEventListener("change", render);
     function applySavedDataset(rows, fileName) {
       activeDashboardCompanyData = rows;
       activeDashboardData = KpiWorkbook.summarize(rows);
-      pics = [...new Set(rows.map(row => row.pic))].filter(name => name !== "JIA WEN").map(name => name.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()));
-      if (!pics.length) pics = ["Yoong Shi", "Ling Yin", "Iza"];
-      if (state.pic !== "All PICs" && !pics.includes(state.pic)) state.pic = "All PICs";
+      pics = [...new Set(rows.map(row => row.pic))].map(name => name.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()));
+      if (!pics.length) pics = ["Yoong Shi", "Jia Wen", "Ling Yin", "Iza"];
+      if (
+      state.pic !== "All PICs" &&
+      state.pic !== "Unassigned" &&
+      !pics.includes(state.pic)
+    ) {
+      state.pic = "Unassigned";
+    }
       state.company = "All Companies";
       state.detailCompany = "All Companies";
       state.trendOpen = true;
@@ -1102,14 +1095,22 @@ document.getElementById("serviceBreakdown").innerHTML =
       render();
     }
     document.getElementById("clearFilters").addEventListener("click", () => {
-      Object.assign(state, { pic: "Unassigned", service: "All Services", role: "All Roles", invoiceType: "All Types", company: "All Companies", detailCompany: "All Companies", trendFocus: null });
+      Object.assign(state, {
+      pic: "Unassigned",
+      service: "All Services",
+      role: "All Roles",
+      invoiceType: "All Types",
+      company: "All Companies",
+      detailCompany: "All Companies",
+      trendFocus: null
+});
       render();
     });
     window.KpiDashboard = { apply: applySavedDataset };
     setInterval(() => { if (!document.hidden) render(); }, 30000);
     function render() {
       buildTabs("serviceTabs", ["All Services", ...services], "service");
-      buildTabs("picTabs", ["All PICs", ...pics], "pic");
+      buildTabs("picTabs", ["All PICs", "Unassigned", ...pics.filter(pic => pic !== "Unassigned")], "pic");
       buildTabs("roleTabs", ["All Roles", ...roles], "role");
       if (!availableEInvoiceTypes().includes(state.invoiceType)) state.invoiceType = "All Types";
       buildTabs("invoiceTypeTabs", availableEInvoiceTypes(), "invoiceType");
@@ -1125,20 +1126,38 @@ document.getElementById("serviceBreakdown").innerHTML =
       if (fromInput.value > toInput.value) toInput.value = fromInput.value;
       const from = fromInput.value;
       const effectiveTo = toInput.value;
+      document.getElementById("dateSummary").textContent = `${monthLabel(from)} to ${monthLabel(effectiveTo)} (inclusive)`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
-      renderServiceBreakdown();
-      renderPicEfficiency(months);
-     const companyRows = filteredCompanyRows();
+      renderServiceBreakdown(months);
+     function filteredCompanyRows() {
+  const role = state.role === "Sub Reviewer" ? "Sub" : "Main";
 
-    console.log("=== OVERALL KPI FILTER DEBUG ===");
-    console.log("Selected PIC:", state.pic);
-    console.log("Selected Service:", state.service);
-    console.log("Selected Role:", state.role);
-    console.log("Selected Company:", state.company);
-    console.log("Filtered rows:", companyRows.length);
-    console.log("Total rows:", activeDashboardCompanyData.length);
-    console.log("First filtered record:", companyRows[0]);
+  return activeDashboardCompanyData.filter(row => {
+    const rowPic = String(row.pic ?? "").trim().toUpperCase();
+
+    const picMatches =
+      state.pic === "All PICs" ||
+      (state.pic === "Unassigned"
+        ? rowPic === "" || rowPic === "UNASSIGNED"
+        : rowPic === state.pic.trim().toUpperCase());
+
+    const serviceMatches =
+      state.service === "All Services" ||
+      row.service === state.service;
+
+    const roleMatches =
+      state.role === "All Roles" ||
+      row.role === role;
+
+    const invoiceMatches =
+      state.service !== "E-Invoice" ||
+      state.invoiceType === "All Types" ||
+      row.invoiceType === state.invoiceType;
+
+    return picMatches && serviceMatches && roleMatches && invoiceMatches;
+  });
+}
       buildCompanyBoxes(companyRows);
       const chartRows = state.detailCompany === "All Companies"
         ? companyRows
@@ -1167,9 +1186,12 @@ document.getElementById("serviceBreakdown").innerHTML =
         "Not Yet Due": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.waitApproval, 0),
         "Boss Completed": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notApplicable, 0)
       }));
+      const chartCompletedTotal = chartMonthly.reduce((sum, row) => sum + row.Completed, 0);
+      const chartDelayTotal = chartMonthly.reduce((sum, row) => sum + row.Delay, 0);
       const active = totals.Completed + totals.Delay + totals["Not Yet Due"] + totals["Boss Completed"];
       document.getElementById("companyKpi").textContent = companyCount(statusRows);
       document.getElementById("trendDetail").classList.toggle("open", state.trendOpen);
+      document.getElementById("chartCompletedTotal").textContent = chartCompletedTotal;
 
       const completedByAnyone = totals.Completed + totals["Boss Completed"];
       const completionRate = active ? completedByAnyone / active * 100 : 0;
@@ -1189,6 +1211,7 @@ document.getElementById("serviceBreakdown").innerHTML =
       });
 
       document.getElementById("donutNaLegend").textContent = totals["Boss Completed"];
+      document.getElementById("selectAllStatusButton").classList.toggle("active", !state.trendFocus);
       document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
       document.getElementById("donutAssignedLegend").textContent = donutTotal + pending;
       document.getElementById("donutCompleteLegend").textContent = totals.Completed;
@@ -1204,7 +1227,6 @@ document.getElementById("serviceBreakdown").innerHTML =
       renderMonthlyBars(chartMonthly);
 
       renderPicSummary(months);
-      renderOverallDelay(months);
     }
     ["fromDate", "toDate"].forEach(id => document.getElementById(id).addEventListener("change", render));
     function navigateToCompanyBoxes() {
@@ -1229,16 +1251,20 @@ document.getElementById("serviceBreakdown").innerHTML =
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
+    function selectAllStatuses() {
+      state.trendFocus = null;
+      state.trendOpen = true;
+      render();
+      document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
     document.getElementById("companySearch").addEventListener("input", renderCompanyOptions);
-    document.getElementById("companySearch").addEventListener("focus", renderCompanyOptions);
-    document.getElementById("companySearch").addEventListener("blur", () => setTimeout(() => { document.getElementById("companySearchResults").hidden = true; }, 120));
-    document.getElementById("companySearch").addEventListener("keydown", event => { if (event.key === "Escape") document.getElementById("companySearchResults").hidden = true; });
     document.getElementById("companySelect").addEventListener("change", event => {
       state.detailCompany = event.target.value; state.company = state.detailCompany; state.trendOpen = true; render();
     });
     render();
   </script>
-  <script src="kpi-upload.js?v=20261026-direct-upload"></script>
+  <script src="kpi-upload.js?v=20261019b"></script>
 </body>
 </html>
