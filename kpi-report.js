@@ -114,22 +114,22 @@
     // 3. Service delay focus
     hy+=4;
     band('3. Service delay focus',hy);
-    hy+=27;
+    hy+=30;
     if(!data.serviceRisks.length) { text('No delayed tasks in the selected month range.',42,hy,11,'#12956d'); hy+=22; }
     else {
       const topService=data.serviceRisks[0];
-      text('Service',42,hy,9,'#63758b',true);text('Delayed',300,hy,9);text('Percentage',375,hy,9);text('Focus',475,hy,9);hy+=17;
-      data.serviceRisks.forEach((s,i)=>{const color=i===0?'#ca3147':s.rate>=.25?'#a96700':'#346886';text(s.name,42,hy,10,'#173758',true,240);text(s.delayed+' / '+s.total,300,hy,9);text(percent(s.delayed,s.total),375,hy,9);text(i===0?'Needs focus':s.rate>=.25?'Watch':'Low',475,hy,9,color,true);line(hy+12);hy+=17;});
-      hy+=2;
-      const affected=[...topService.companies].sort();
-      text('Most focus needed: '+topService.name+' ('+percent(topService.delayed,topService.total)+' delayed). Affected companies: '+(affected.join(', ')),32,hy,9,'#173758',true,520);
-      hy+=14;
-      line(hy);
-      text('Percentage = delayed tasks / total assigned tasks. Address the highest percentage service first.',32,hy+15,8,'#63758b');
-      hy+=15;
+      text('Service',42,hy,9,'#63758b',true);text('Delayed',300,hy,9);text('Percentage',375,hy,9);text('Focus',475,hy,9);hy+=18;
+      data.serviceRisks.forEach((s,i)=>{const color=i===0?'#ca3147':s.rate>=.25?'#a96700':'#346886';text(s.name,42,hy,10,'#173758',true,240);text(s.delayed+' / '+s.total,300,hy,9);text(percent(s.delayed,s.total),375,hy,9);text(i===0?'Needs focus':s.rate>=.25?'Watch':'Low',475,hy,9,color,true);line(hy+13);hy+=18;});
+      hy+=4;
+      text('Most focus needed: '+topService.name+' ('+percent(topService.delayed,topService.total)+' delayed).',32,hy,10,'#173758',true,520);
+      hy+=18;
+      text('Affected companies: '+[...topService.companies].sort().join(', '),42,hy,9,'#63758b',false,531);
+      hy+=16;
+      text('Percentage = delayed tasks / total assigned tasks. Address the highest percentage service first.',32,hy,8,'#63758b');
+      hy+=26;
     }
-    line(hy+8);
-    text('KPI Dashboard | Summary Report',32,hy+23,8,'#63758b');text('1 / 1',535,hy+23,8);
+    line(hy);
+    text('KPI Dashboard | Summary Report',32,hy+17,8,'#63758b');text('1 / 1',535,hy+17,8);
     if(url) URL.revokeObjectURL(url); url=URL.createObjectURL(pdf([canvas]));
     const link=dialog.querySelector('#reportDownload');link.href=url;link.download='KPI-Summary-'+from+'-to-'+to+'.pdf';
     dialog.querySelector('#reportPages').innerHTML='<img alt="KPI summary report: PIC completion analysis, company risk priorities and service delay focus" src="'+canvas.toDataURL('image/png')+'">';
