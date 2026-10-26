@@ -819,8 +819,8 @@
     </section>
 
     <section class="panel pic-summary-panel" id="overallDelayPanel" aria-label="Overall delayed tasks">
-      <div class="pic-summary-head"><h2>Companies with Delayed Tasks</h2><select id="overallDelayLimit" aria-label="Company delay limit"><option value="5">Top 5 Companies</option><option value="10">Top 10 Companies</option><option value="all">All Companies</option></select><strong id="overallDelayLabel"></strong></div>
-      <p class="sub">All PICs and services for the selected months &middot; not filtered by PIC</p>
+      <div class="pic-summary-head"><h2>Companies with Delayed Tasks</h2><div class="delay-selectors" style="display:flex;gap:12px;flex-wrap:wrap"><select id="overallDelayLimit" aria-label="Company delay limit"><option value="5">Top 5 Companies</option><option value="10">Top 10 Companies</option><option value="all">All Companies</option></select><select id="overallDelayService" aria-label="Delayed tasks service"><option value="All Services">All Services</option><option>Accounting</option><option>Payroll</option><option>E-Invoice</option><option>SST</option></select></div><strong id="overallDelayLabel"></strong></div>
+      <p class="sub" id="overallDelayScope">All PICs and services for the selected months</p>
       <div class="overall-delay-visual"><i></i><div class="pic-breakdown-track"><div id="overallDelayBar" style="background:#df5a62;width:0"></div></div></div>
       <div class="pic-delay-table-wrap"><table class="pic-delay-table"><thead><tr><th scope="col">Company</th><th scope="col">Service</th><th scope="col">Delayed Months</th><th scope="col">Delayed Tasks</th></tr></thead><tbody id="picDelayedCompanies"></tbody></table></div>
     </section>
@@ -996,7 +996,9 @@
     }
     function renderOverallDelay(months) {
       const selectedMonths = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month));
+      const service = document.getElementById("overallDelayService").value;
+      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month) && (service === "All Services" || row.service === service));
+      document.getElementById("overallDelayScope").textContent = "All PICs - " + service + " - selected months";
       const total = rows.length;
       const delayedCompanies = new Map();
       rows.filter(row => KpiCore.effectiveStatus(row, document.getElementById("toDate").value) === "delay").forEach(row => {
@@ -1010,7 +1012,7 @@
       const ranked = [...delayedCompanies.values()].sort((a, b) => b.count - a.count || a.company.localeCompare(b.company));
       const limit = document.getElementById("overallDelayLimit").value;
       const visible = limit === "all" ? ranked : ranked.slice(0, Number(limit));
-      document.getElementById("picDelayedCompanies").innerHTML = visible.length ? visible.map(item => '<tr><td>' + escapeHtml(item.company) + '</td><td>' + escapeHtml([...item.services].sort().join(', ')) + '</td><td>' + escapeHtml([...item.months].sort().map(chartMonthLabel).join(', ')) + '</td><td class="pic-delayed-count">' + item.count + '</td></tr>').join('') : '<tr><td colspan="4">No delayed tasks in the selected months.</td></tr>';
+      document.getElementById("picDelayedCompanies").innerHTML = visible.length ? visible.map(item => '<tr><td>' + escapeHtml(item.company) + '</td><td>' + escapeHtml([...item.services].sort().join(', ')) + '</td><td>' + escapeHtml([...item.months].sort().map(chartMonthLabel).join(', ')) + '</td><td class="pic-delayed-count">' + item.count + '</td></tr>').join('') : '<tr><td colspan="4">No delayed tasks for the selected service and months.</td></tr>';
     }
     function companyCount(rows) {
       return new Set(rows.map(row => row.company)).size;
@@ -1094,6 +1096,7 @@ document.getElementById("serviceBreakdown").innerHTML =
     }
     document.getElementById("breakdownMetric").addEventListener("change", render);
     document.getElementById("overallDelayLimit").addEventListener("change", render);
+    document.getElementById("overallDelayService").addEventListener("change", render);
     function applySavedDataset(rows, fileName) {
       activeDashboardCompanyData = rows;
       activeDashboardData = KpiWorkbook.summarize(rows);
