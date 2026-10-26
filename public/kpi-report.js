@@ -118,9 +118,10 @@
     if(!data.serviceRisks.length) { text('No delayed tasks in the selected month range.',42,hy,11,'#12956d'); hy+=22; }
     else {
       const topService=data.serviceRisks[0];
-      text('Service',42,hy,9,'#63758b',true);text('Delayed',300,hy,9);text('Percentage',375,hy,9);text('Focus',475,hy,9);hy+=18;
-      data.serviceRisks.forEach((s,i)=>{const color=i===0?'#ca3147':s.rate>=.25?'#a96700':'#346886';text(s.name,42,hy,10,'#173758',true,240);text(s.delayed+' / '+s.total,300,hy,9);text(percent(s.delayed,s.total),375,hy,9);text(i===0?'Needs focus':s.rate>=.25?'Watch':'Low',475,hy,9,color,true);line(hy+13);hy+=18;});
-      hy+=4;
+      text('Service',42,hy,9,'#63758b',true);text('Delayed',355,hy,9);text('Percentage',430,hy,9);text('Focus',505,hy,9);
+      hy+=6;line(hy);hy+=12;
+      data.serviceRisks.forEach((s,i)=>{const color=i===0?'#ca3147':s.rate>=.25?'#a96700':'#346886';text(s.name,42,hy,10,'#173758',true,290);text(s.delayed+' / '+s.total,355,hy,9);text(percent(s.delayed,s.total),430,hy,9);text(i===0?'Needs focus':s.rate>=.25?'Watch':'Low',505,hy,9,color,true);line(hy+13);hy+=20;});
+      hy+=6;
       text('Most focus needed: '+topService.name+' ('+percent(topService.delayed,topService.total)+' delayed).',32,hy,10,'#173758',true,520);
       hy+=18;
       text('Affected companies: '+[...topService.companies].sort().join(', '),42,hy,9,'#63758b',false,531);
