@@ -1,36 +1,19 @@
-const {test,expect}=require('@playwright/test');
-const baseline=require('../data/baseline.json');
-test('company timeline shows actual PIC/service monthly quantities and no keyword field',async({page})=>{
+const {test,expect}=require('@playwright/test');const baseline=require('../data/baseline.json');
+test('service-only timeline includes every company and reconciles PIC totals',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/current',route=>route.fulfill({json:{rows:baseline.rows,version:{id:'test',fileName:baseline.fileName,createdAt:baseline.createdAt}}}));
- await page.goto('/');await expect(page.locator('#excelUpload')).toBeEnabled();
- await expect(page.locator('#companySearch')).toHaveCount(0);
- await expect(page.locator('#chart')).toContainText('Select a company');
- const companies=[...new Set(baseline.rows.filter(r=>r.completed).map(r=>r.company))];
- for(const company of companies.slice(0,3)){
-  await page.locator('#companySelect').selectOption(company);
-  const rows=baseline.rows.filter(r=>r.company===company&&r.completed);
-  await expect(page.locator('#timelineTaskCount')).toHaveText(String(rows.length));
-  await expect(page.locator('#timelinePicCount')).toHaveText(String(new Set(rows.map(r=>r.pic).filter(p=>p&&p!=='UNASSIGNED')).size));
-  const cells=await page.locator('.company-timeline tbody tr').evaluateAll(nodes=>nodes.flatMap(tr=>[...tr.querySelectorAll('.timeline-cell')].map(cell=>({pic:tr.dataset.pic,service:tr.dataset.service,month:cell.dataset.month,count:Number(cell.dataset.count),text:cell.textContent}))));
-  expect(cells.reduce((n,c)=>n+c.count,0)).toBe(rows.length);
-  for(const cell of cells){expect(cell.count).toBe(rows.filter(r=>r.pic===cell.pic&&r.service===cell.service&&r.month===cell.month).length);if(cell.count)expect(cell.text).toBe(String(cell.count));}
-  for(const service of [...new Set(rows.map(r=>r.service))]){
-   await page.locator('#timelineServiceSelect').selectOption(service);
-   await expect(page.locator('#timelineTaskCount')).toHaveText(String(rows.filter(r=>r.service===service).length));
-   const shown=await page.locator('.company-timeline tbody tr').evaluateAll(nodes=>nodes.map(n=>n.dataset.service));
-   expect(shown.every(value=>value===service)).toBe(true);
-  }
-  await page.locator('#timelineServiceSelect').selectOption('All Services');
- }
- const company=companies[0];await page.locator('#companySelect').selectOption(company);
- const initial=await page.locator('#chart').innerHTML();
- await expect(page.locator('.filters')).toHaveCount(0);await expect(page.getByRole('button',{name:'Select All',exact:true})).toHaveCount(0);expect(await page.locator('#chart').innerHTML()).toBe(initial);
- await page.locator('#fromDate').fill('2026-03');await page.locator('#fromDate').dispatchEvent('change');
- await page.locator('#toDate').fill('2026-05');await page.locator('#toDate').dispatchEvent('change');
- const rows=baseline.rows.filter(r=>r.company===company&&r.completed&&r.month>='2026-03'&&r.month<='2026-05');
- await expect(page.locator('#timelineTaskCount')).toHaveText(String(rows.length));
- await page.setViewportSize({width:390,height:844});
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- expect(errors).toEqual([]);
+ await page.goto('/');await expect(page.locator('#excelUpload')).toBeEnabled();await expect(page.locator('#companySelect')).toHaveCount(0);await expect(page.locator('#companySearch')).toHaveCount(0);
+ const verify=async(service,from='2026-01',to='2026-12')=>{
+  const scoped=baseline.rows.filter(r=>(service==='All Services'||r.service===service)&&r.month>=from&&r.month<=to),done=scoped.filter(r=>r.completed);
+  await expect(page.locator('#timelineTaskCount')).toHaveText(String(done.length));
+  const cells=await page.locator('.company-timeline tbody tr').evaluateAll(trs=>trs.flatMap(tr=>[...tr.querySelectorAll('.timeline-cell')].map(c=>({company:tr.dataset.company,pic:tr.dataset.pic,service:tr.dataset.service,month:c.dataset.month,count:Number(c.dataset.count)}))));
+  expect([...new Set(cells.map(c=>c.company))].sort()).toEqual([...new Set(scoped.map(r=>r.company))].sort());
+  for(const c of cells)expect(c.count).toBe(done.filter(r=>r.company===c.company&&r.pic===c.pic&&r.service===c.service&&r.month===c.month).length);
+  const totals=await page.locator('#timelinePicTotals tbody tr').evaluateAll(trs=>trs.map(tr=>({pic:tr.dataset.pic,count:Number(tr.querySelector('td').textContent)})));
+  expect(totals.reduce((n,r)=>n+r.count,0)).toBe(done.length);
+  for(const item of totals)expect(item.count).toBe(done.filter(r=>r.pic===item.pic).length);
+ };
+ for(const service of ['All Services','Accounting','Payroll','E-Invoice','SST']){await page.locator('#timelineServiceSelect').selectOption(service);await verify(service);}
+ await page.locator('#fromDate').fill('2026-03');await page.locator('#fromDate').dispatchEvent('change');await page.locator('#toDate').fill('2026-05');await page.locator('#toDate').dispatchEvent('change');await verify('SST','2026-03','2026-05');
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(errors).toEqual([]);
 });

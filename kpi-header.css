@@ -167,3 +167,10 @@ header .revert-button:focus-visible, header .upload-button:focus-visible { outli
 .timeline-note,.timeline-empty{font-size:13px;color:var(--muted);line-height:1.6;margin:16px 0}
 #chart{min-width:0;max-width:100%}
 @media(max-width:620px){.timeline-stats{gap:28px}.company-timeline th:first-child{min-width:140px}}
+
+.timeline-pic-totals{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.timeline-pic-totals h3{margin:0;color:var(--navy)}
+#timelinePicTotals{width:100%;max-width:480px;border-collapse:collapse}
+#timelinePicTotals th,#timelinePicTotals td{padding:10px 14px;border:1px solid var(--line);text-align:left}
+#timelinePicTotals td,#timelinePicTotals thead th:last-child{text-align:right}
+#timelinePicTotals thead,#timelinePicTotals tfoot{background:#f3f6fa;font-weight:700}

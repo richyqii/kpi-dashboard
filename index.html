@@ -791,7 +791,7 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Monthly Status Trend</h2>
-          <div class="sub">Select a company to see completed task quantities for each PIC by month.</div>
+          <div class="sub">All companies: select a service to see PIC-completed task quantities by month.</div>
         </div>
         <div class="trend-detail" id="trendDetail">
           <div class="legend">
@@ -801,10 +801,10 @@
             <div class="company-detail-tools">
               <div>
                 <div class="filter-label">Company</div>
-                <div class="company-detail-title" id="companyDetailTitle"></div>
+                <div class="company-detail-title">All Companies</div>
               </div>
             </div>
-            <div class="company-selection-bar"><label>Select company<select id="companySelect"></select></label><label>Select service<select id="timelineServiceSelect" aria-label="Timeline service"></select></label></div>
+            <div class="company-selection-bar"><label>Select service<select id="timelineServiceSelect" aria-label="Timeline service"></select></label></div>
           </div>
           <div class="chart" id="chart"></div>
         </div>
@@ -933,49 +933,46 @@
         (state.service === "All Services" || row.service === state.service) && (state.pic === "All PICs" || row.pic === state.pic.toUpperCase()) && (state.role === "All Roles" || row.role === role) &&
         (state.service !== "E-Invoice" || state.invoiceType === "All Types" || row.invoiceType === state.invoiceType));
     }
-    let availableCompanies = [];
     let timelineService = "All Services";
-    function buildCompanyBoxes(rows) {
-      availableCompanies = [...new Set(rows.map(row => row.company))].sort((a,b) => a.localeCompare(b));
-      if (!availableCompanies.includes(state.detailCompany)) state.detailCompany = "All Companies";
-      state.company = state.detailCompany;
-      document.getElementById("companyDetailTitle").textContent = state.detailCompany === "All Companies" ? "Company PIC Work Timeline" : state.detailCompany;
-      document.getElementById("companySelect").replaceChildren(new Option("Select a company", "All Companies", false, state.detailCompany === "All Companies"), ...availableCompanies.map(company => new Option(company, company, false, company === state.detailCompany)));
-    }
     function renderTimelineServices() {
-      const available = services.filter(service => activeDashboardCompanyData.some(row => row.company === state.detailCompany && row.service === service));
+      const available = services.filter(service => activeDashboardCompanyData.some(row => row.service === service));
       if (!available.includes(timelineService)) timelineService = "All Services";
       const select = document.getElementById("timelineServiceSelect");
       select.replaceChildren(...["All Services", ...available].map(service => new Option(service, service, false, service === timelineService)));
-      select.disabled = state.detailCompany === "All Companies";
+
     }
     function renderCompanyTimeline(months) {
       renderTimelineServices();
       const chart = document.getElementById("chart");
-      if (state.detailCompany === "All Companies") { chart.innerHTML = '<p class="timeline-empty">Select a company to see the work completed by each PIC, month by month.</p>'; return; }
       const selected = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => row.company === state.detailCompany && (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month) && KpiCore.rawStatus(row) === "completed");
+      const scopedRows = activeDashboardCompanyData.filter(row => (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month));
+      const rows = scopedRows.filter(row => KpiCore.rawStatus(row) === "completed");
       const groups = new Map();
-      for (const row of rows) {
-        const key = JSON.stringify([row.pic, row.service]);
-        if (!groups.has(key)) groups.set(key, { pic: row.pic, service: row.service, counts: new Map(), total: 0 });
+      for (const row of scopedRows) {
+        const key = JSON.stringify([row.company, row.pic, row.service]);
+        if (!groups.has(key)) groups.set(key, { company: row.company, pic: row.pic, service: row.service, counts: new Map(), total: 0 });
+        if (KpiCore.rawStatus(row) !== "completed") continue;
         const group = groups.get(key); group.counts.set(row.month, (group.counts.get(row.month) || 0) + 1); group.total++;
       }
       const pics = new Set(rows.map(row => row.pic).filter(pic => pic && pic !== "UNASSIGNED"));
       const palette = { Accounting: "#daf4e8", Payroll: "#deecff", "E-Invoice": "#fff0d2", SST: "#eee5ff" };
       let content = '<div class="timeline-stats"><div>PICs Involved<strong id="timelinePicCount">' + pics.size + '</strong></div><div>PIC Completed Tasks<strong id="timelineTaskCount">' + rows.length + '</strong></div></div>';
-      if (!groups.size) { chart.innerHTML = content + '<p class="timeline-empty">No PIC-completed tasks recorded for this company in the selected months.</p>'; return; }
-      content += '<div class="company-timeline-scroll"><table class="company-timeline"><caption>Company PIC Work Timeline - ' + escapeHtml(state.detailCompany) + '</caption><thead><tr><th scope="col">PIC / Service</th>' + months.map(month => '<th scope="col">' + escapeHtml(chartMonthLabel(month)) + '</th>').join('') + '</tr></thead><tbody>';
-      for (const group of [...groups.values()].sort((a,b) => a.pic.localeCompare(b.pic) || a.service.localeCompare(b.service))) {
+      if (!groups.size) { chart.innerHTML = content + '<p class="timeline-empty">No tasks recorded for the selected service and months.</p>'; return; }
+      content += '<div class="company-timeline-scroll"><table class="company-timeline"><caption>Company PIC Work Timeline - ' + escapeHtml(timelineService) + ' - All Companies</caption><thead><tr><th scope="col">Company / PIC / Service</th>' + months.map(month => '<th scope="col">' + escapeHtml(chartMonthLabel(month)) + '</th>').join('') + '</tr></thead><tbody>';
+      for (const group of [...groups.values()].sort((a,b) => a.company.localeCompare(b.company) || a.pic.localeCompare(b.pic) || a.service.localeCompare(b.service))) {
         const name = group.pic.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-        content += '<tr data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(name) + '<small>' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
+        content += '<tr data-company="' + escapeHtml(group.company) + '" data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(group.company) + '<small>' + escapeHtml(name) + ' - ' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
         for (const month of months) {
           const count = group.counts.get(month) || 0;
           content += '<td><span class="timeline-cell' + (count ? ' has-work' : '') + '" data-month="' + month + '" data-count="' + count + '" style="' + (count ? 'background:' + palette[group.service] : '') + '" title="' + escapeHtml(name + ' - ' + group.service + ' - ' + chartMonthLabel(month) + ': ' + count + ' completed tasks') + '">' + (count || '-') + '</span></td>';
         }
         content += '</tr>';
       }
-      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. Counts include all PICs for the selected company, service and month range.</p>';
+      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. Counts include all companies for the selected service and month range.</p>';
+      const totals = new Map();
+      for (const row of scopedRows) if (row.pic && row.pic !== "UNASSIGNED") totals.set(row.pic, totals.get(row.pic) || 0);
+      for (const row of rows) totals.set(row.pic || "UNASSIGNED", (totals.get(row.pic || "UNASSIGNED") || 0) + 1);
+      chart.insertAdjacentHTML('beforeend', '<section class="timeline-pic-totals"><h3>Total Tasks Completed by PIC</h3><p class="timeline-note">All companies, selected service and months. Boss-completed tasks are excluded.</p><table id="timelinePicTotals"><thead><tr><th scope="col">PIC</th><th scope="col">Completed Tasks</th></tr></thead><tbody>' + [...totals].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0])).map(([pic,count]) => '<tr data-pic="' + escapeHtml(pic) + '"><th scope="row">' + escapeHtml(pic) + '</th><td>' + count + '</td></tr>').join('') + '</tbody><tfoot><tr><th scope="row">Total</th><td>' + rows.length + '</td></tr></tfoot></table></section>');
     }
     function renderPicSummary(months) {
       const panel = document.getElementById("picSummary");
@@ -1135,7 +1132,7 @@ document.getElementById("serviceBreakdown").innerHTML =
     console.log("Filtered rows:", companyRows.length);
     console.log("Total rows:", activeDashboardCompanyData.length);
     console.log("First filtered record:", companyRows[0]);
-      buildCompanyBoxes(activeDashboardCompanyData);
+
       const statusRows = rollupCompanyMonthStatus(activeDashboardCompanyData, months);
       const pending = 0;
       document.getElementById("pendingTaskNote").textContent = "The selected To month is the cutoff: empty tasks through that month are Delayed; later months are Not Yet Due.";
@@ -1196,7 +1193,7 @@ document.getElementById("serviceBreakdown").innerHTML =
       render();
       const panel = document.getElementById("companyDetailPanel");
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
-      const activeCompany = document.getElementById("companySelect");
+      const activeCompany = document.getElementById("timelineServiceSelect");
       if (activeCompany) activeCompany.focus({ preventScroll: true });
     }
     document.getElementById("companyKpiCard").addEventListener("click", navigateToCompanyBoxes);
@@ -1221,9 +1218,7 @@ document.getElementById("serviceBreakdown").innerHTML =
     }
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
     document.getElementById("timelineServiceSelect").addEventListener("change", event => { timelineService = event.target.value; render(); });
-    document.getElementById("companySelect").addEventListener("change", event => {
-      state.detailCompany = event.target.value; state.company = state.detailCompany; state.trendOpen = true; render();
-    });
+
     render();
   </script>
   <script src="kpi-upload.js?v=20261026-direct-upload"></script>
