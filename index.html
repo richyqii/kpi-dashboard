@@ -943,9 +943,10 @@
       const scopedRows = activeDashboardCompanyData.filter(row => picName(row).replace(/\s+/g, "").toUpperCase() !== "JIAWEN" && picName(row).toUpperCase() !== "UNASSIGNED" && (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month));
       const rows = scopedRows.filter(row => KpiCore.rawStatus(row) === "completed");
       const groups = new Map();
+      const splitSelfBilled = timelineService === "E-Invoice";
       for (const row of scopedRows) {
-        const key = JSON.stringify([row.company, row.pic, row.service]);
-        if (!groups.has(key)) groups.set(key, { company: row.company, pic: row.pic, service: row.service, counts: new Map(), total: 0 });
+        const key = JSON.stringify([row.company, row.pic, row.service, splitSelfBilled ? (row.invoiceType || "Billed") : ""]);
+        if (!groups.has(key)) groups.set(key, { company: row.company, pic: row.pic, service: row.service, invoiceType: row.invoiceType || "Billed", counts: new Map(), total: 0 });
         if (KpiCore.rawStatus(row) !== "completed") continue;
         const group = groups.get(key); group.counts.set(row.month, (group.counts.get(row.month) || 0) + 1); group.total++;
       }
@@ -960,7 +961,8 @@
       content += '<div class="company-timeline-scroll"><table class="company-timeline"><caption>Company PIC Work Timeline - ' + escapeHtml(timelineService) + ' - All Companies</caption><thead><tr><th scope="col">Company / PIC / Service</th>' + months.map(month => '<th scope="col">' + escapeHtml(chartMonthLabel(month)) + '</th>').join('') + '</tr></thead><tbody>';
       for (const group of [...groups.values()].sort((a,b) => a.company.localeCompare(b.company) || a.pic.localeCompare(b.pic) || a.service.localeCompare(b.service))) {
         const name = group.pic.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-        content += '<tr data-company="' + escapeHtml(group.company) + '" data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(group.company) + '<small>' + picSwatch(group.pic) + escapeHtml(name) + ' - ' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
+        const companyLabel = splitSelfBilled && group.invoiceType === "Self-bill" ? group.company + " Self Billed" : group.company;
+        content += '<tr data-company="' + escapeHtml(group.company) + '" data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(companyLabel) + '<small>' + picSwatch(group.pic) + escapeHtml(name) + ' - ' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
         for (const month of months) {
           const count = group.counts.get(month) || 0;
           content += '<td><span class="timeline-cell' + (count ? ' has-work' : '') + '" data-month="' + month + '" data-count="' + count + '" style="' + (count ? 'background:' + colourForPic(group.pic) : '') + '" title="' + escapeHtml(name + ' - ' + group.service + ' - ' + chartMonthLabel(month) + ': ' + count + ' completed tasks') + '">' + (count || '-') + '</span></td>';
