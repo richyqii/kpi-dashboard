@@ -74,14 +74,13 @@
     line(112);
     text(data.total+' tasks',32,138,15,'#173758',true);text(data.companies+' companies',200,138,15,'#173758',true);text(data.delayed+' delayed tasks',385,138,15,'#d64550',true);
     band('1. PIC completion analysis',173);
-    text('PIC',42,204,9,'#63758b',true);text('Period (from - to)',180,204,9,'#63758b',true);text('Tasks',355,204,9,'#63758b',true);text('Completion',470,204,9,'#63758b',true);
+    text('PIC',42,204,9,'#63758b',true);text('Period (from - to)',180,204,9,'#63758b',true);text('Tasks',355,204,9,'#63758b',true);
     const visiblePics=data.pics.slice(0,8);
-    visiblePics.forEach((p,i)=>{const y=228+i*23;const period=p.min!==undefined?monthLabel(p.min)+' - '+monthLabel(p.max):'-';text(p.name,42,y,10,'#173758',true,125);text(period,180,y,10,'#173758',false,155);text(p.completed,360,y);text(percent(p.completed,p.total),485,y,10,'#12956d',true);line(y+8);});
+    visiblePics.forEach((p,i)=>{const y=228+i*23;const period=p.min!==undefined?monthLabel(p.min)+' - '+monthLabel(p.max):'-';text(p.name,42,y,10,'#173758',true,125);text(period,180,y,10,'#173758',false,155);text(p.completed,360,y);line(y+8);});
     if(!visiblePics.length) text('No assigned PIC records in this month range.',42,228);
     else {
       const best=data.pics[0];
-      text('Who did the most tasks: '+best.name+' ('+best.completed+' of '+best.total+' assigned, '+percent(best.completed,best.total)+'), all services.',42,418,9,'#12956d',true,520);
-      text('Next: '+visiblePics.slice(1,4).map(p=>p.name+' ('+p.completed+' tasks from '+monthLabel(p.min)+' to '+monthLabel(p.max)+')').join('  |  '),42,436,8,'#63758b',false,520);
+      text('Who did the most tasks: '+best.name+' ('+best.completed+' of '+best.total+' assigned), all services.',42,418,9,'#12956d',true,520);
     }
     text('For all services combined. Period = first to last month with assigned tasks in the selected range.',32,454,8,'#63758b');
     text('Jia Wen and Unassigned excluded from PIC analysis. '+(data.pics.length>8?'Top 8 of '+data.pics.length+' PICs ranked by tasks done.':'Ranked by tasks done.'),32,466,8,'#63758b');
