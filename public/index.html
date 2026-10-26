@@ -833,12 +833,6 @@
           <div id="serviceBreakdown"></div>
           <div class="breakdown-legend"><span><i style="background:var(--green)"></i>PIC Completed</span><span><i style="background:var(--red)"></i>Delayed</span><span><i style="background:#3984c6"></i>Boss Completed</span></div>
         </section>
-        <section class="panel pic-efficiency-panel">
-          <div class="breakdown-head"><h2>PIC Efficiency Comparison</h2></div>
-          <div id="picEfficiency"></div>
-          <div class="breakdown-legend"><span><i style="background:var(--green)"></i>PIC Completed</span></div>
-          <p class="sub">Efficiency = PIC Completed divided by all assigned tasks, ranked highest first.</p>
-        </section>
       </div>
     </section>
   </main>
@@ -1073,27 +1067,6 @@ document.getElementById("serviceBreakdown").innerHTML =
         return '<div class="service-breakdown-row"><strong>' + escapeHtml(service) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(service + '. ' + description) + '">' + segments + '</div><strong class="service-breakdown-rate">' + rate + '</strong></div>';
       }).join("");
     }
-    function renderPicEfficiency(months) {
-      const selectedMonths = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month) && row.pic && !["JIA WEN", "UNASSIGNED"].includes(row.pic.toUpperCase()));
-      const totals = new Map(), picDone = new Map();
-      rows.forEach(row => {
-        totals.set(row.pic, (totals.get(row.pic) || 0) + 1);
-        const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value);
-        if (status === "completed") picDone.set(row.pic, (picDone.get(row.pic) || 0) + 1);
-      });
-      const list = [...totals.entries()].map(([pic, total]) => {
-        const completed = picDone.get(pic) || 0;
-        const rate = total ? completed / total * 100 : 0;
-        return { pic, completed, total, rate };
-      }).sort((a, b) => b.rate - a.rate || b.completed - a.completed || a.pic.localeCompare(b.pic));
-      const picLabel = pic => pic ? pic.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()) : "Unassigned";
-      document.getElementById("picEfficiency").innerHTML = list.length ? list.map(item => {
-        const detail = 'PIC Completed: ' + item.completed + ' of ' + item.total + ' assigned tasks';
-        const segments = '<span style="width:' + item.rate + '%;background:#19a477" title="' + detail + '"></span>';
-        return '<div class="service-breakdown-row"><strong>' + escapeHtml(picLabel(item.pic)) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(picLabel(item.pic) + '. ' + detail) + '">' + segments + '</div><strong class="service-breakdown-rate">' + item.rate.toFixed(1) + '%</strong></div>';
-      }).join("") : '<p class="sub">No assigned tasks in the selected month range.</p>';
-    }
     document.getElementById("breakdownMetric").addEventListener("change", render);
     document.getElementById("overallDelayLimit").addEventListener("change", render);
     document.getElementById("overallDelayService").addEventListener("change", render);
@@ -1128,7 +1101,6 @@ document.getElementById("serviceBreakdown").innerHTML =
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
       renderServiceBreakdown(months);
-      renderPicEfficiency(months);
      const companyRows = filteredCompanyRows();
 
     console.log("=== OVERALL KPI FILTER DEBUG ===");
