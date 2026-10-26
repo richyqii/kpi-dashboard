@@ -939,7 +939,8 @@
       renderTimelineServices();
       const chart = document.getElementById("chart");
       const selected = new Set(months);
-      const scopedRows = activeDashboardCompanyData.filter(row => String(row.pic || "").replace(/\s+/g, "").toUpperCase() !== "JIAWEN" && (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month));
+      const picName = row => String(row.pic || "").trim();
+      const scopedRows = activeDashboardCompanyData.filter(row => picName(row).toUpperCase() !== "JIAWEN" && picName(row).toUpperCase() !== "UNASSIGNED" && (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month));
       const rows = scopedRows.filter(row => KpiCore.rawStatus(row) === "completed");
       const groups = new Map();
       for (const row of scopedRows) {
