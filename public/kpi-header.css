@@ -10,10 +10,9 @@ header p { font-size: 16px; opacity: .94; }
 .upload-actions { align-items: center; gap: 14px; }
 .last-updated { padding: 11px 17px; border-radius: 24px; background: #ffffff18; color: #edf4ff; font-size: 13px; line-height: 1.4; }
 header .revert-button, header .upload-button { padding: 13px 20px; border-radius: 9px; font-size: 14px; font-weight: 650; line-height: 1.4; }
-header .revert-button { background: #102e5540; border: 1px solid #c2d7f3; box-shadow: 0 0 0 2px #ffffff12; }
-header .upload-button { background: #fff; color: #245eae; border: 1px solid #c6d9f2; box-shadow: 0 2px 5px #071c3826; }
-header .upload-button:hover { background: #edf4ff; }
-header .upload-button:focus-visible { background: #edf4ff; }
+header .revert-button, header .upload-button { background: #fff; color: #245eae; border: 1px solid #c6d9f2; box-shadow: 0 2px 5px #071c3826; }
+header .revert-button:hover, header .upload-button:hover { background: #edf4ff; }
+header .revert-button:focus-visible, header .upload-button:focus-visible { background: #edf4ff; }
 header .revert-button:focus-visible, header .upload-button:focus-visible { outline: 3px solid #bfdbfe; outline-offset: 3px; }
 .current-file-strip { display: flex; align-items: center; gap: 16px; margin: 10px 26px 0; padding: 18px 20px; border: 1px solid #d8e5f5; border-left: 4px solid #c3d7f1; border-radius: 10px; background: linear-gradient(105deg, #fff, #f0f6fe); }
 .file-icon { width: 40px; height: 44px; flex: 0 0 auto; }
