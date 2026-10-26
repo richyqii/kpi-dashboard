@@ -65,7 +65,12 @@
   }
 
   button.onclick = () => {
-    const from=document.getElementById('fromDate').value, to=document.getElementById('toDate').value;
+    // Always analyse the rows the dashboard is currently showing (updated on every upload/version restore).
+    const months=activeDashboardCompanyData.map(r=>r.month).sort();
+    if(!months.length) { dialog.querySelector('#reportError').textContent='No dashboard data loaded yet. Upload or select a document first.'; dialog.querySelector('#reportError').hidden=false; dialog.showModal(); return; }
+    const fromInput=document.getElementById('fromDate'), toInput=document.getElementById('toDate');
+    const from=fromInput.value>=months[0]?fromInput.value:months[0];
+    const to=toInput.value<=months[months.length-1]?toInput.value:months[months.length-1];
     const file=document.getElementById('currentFileName').textContent.replace(/^Current file:\s*/, '');
     const data=analyse(activeDashboardCompanyData,from,to);
     const canvas=document.createElement('canvas'); canvas.width=1190; canvas.height=1684;
