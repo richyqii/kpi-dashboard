@@ -1,0 +1,32 @@
+const {test,expect}=require('@playwright/test');
+const fs=require('fs');const {resetBaseline}=require('./api-helpers.cjs');
+test('same filename requires approval, cancel preserves data, approval retains the old version',async({page})=>{
+ await resetBaseline(page.request);await page.goto('/');await expect(page.locator('#excelUpload')).toBeEnabled();
+ const before=await(await page.request.get('/api/current')).json();
+ const history=await(await page.request.get('/api/versions')).json();
+ const file={name:before.version.fileName,mimeType:'application/octet-stream',buffer:fs.readFileSync('data/KPI Status 22.10.2026.xlsx')};
+ let previews=0;page.on('request',req=>{if(req.url().endsWith('/api/preview'))previews++;});
+ await page.locator('#excelUpload').setInputFiles(file);
+ await expect(page.locator('#workflowTitle')).toHaveText('File Name Already Exists');
+ expect(previews).toBe(0);
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ expect((await(await page.request.get('/api/current')).json()).version.id).toBe(before.version.id);
+ expect((await(await page.request.get('/api/versions')).json()).versions).toEqual(history.versions);
+ await page.locator('#excelUpload').setInputFiles(file);
+ await expect(page.locator('#workflowTitle')).toHaveText('File Name Already Exists');
+ await page.getByRole('button',{name:'Use New Version',exact:true}).click();
+ await expect(page.locator('#workflowTitle')).toHaveText('Update Successful');
+ const after=await(await page.request.get('/api/current')).json();
+ expect(after.version.id).not.toBe(before.version.id);expect(after.version.fileName).toBe(file.name);
+ const saved=await(await page.request.get('/api/versions')).json();
+ expect(saved.versions).toHaveLength(history.versions.length+1);
+ expect(saved.versions.some(v=>v.id===before.version.id)).toBe(true);
+ await resetBaseline(page.request);
+});
+test('history lookup failure does not apply the upload',async({page})=>{
+ await page.goto('/');await expect(page.locator('#excelUpload')).toBeEnabled();
+ await page.route('**/api/versions',route=>route.fulfill({status:503,json:{error:'Unavailable'}}));
+ let previews=0;page.on('request',req=>{if(req.url().endsWith('/api/preview'))previews++;});
+ await page.locator('#excelUpload').setInputFiles({name:'test.xlsx',mimeType:'application/octet-stream',buffer:Buffer.from('test')});
+ await expect(page.locator('#workflowTitle')).toHaveText('Unable to check file name');expect(previews).toBe(0);
+});
