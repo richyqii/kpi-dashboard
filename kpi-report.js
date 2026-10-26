@@ -21,15 +21,17 @@
       const status = KpiCore.effectiveStatus(r, to);
       const name = String(r.pic || 'Unassigned').trim();
       if (!['JIAWEN', 'UNASSIGNED'].includes(name.replace(/\s/g, '').toUpperCase())) {
-        if (!pics.has(name)) pics.set(name, {name, total:0, completed:0, delayed:0});
+        if (!pics.has(name)) pics.set(name, {name, total:0, completed:0, delayed:0, min:undefined, max:undefined});
         const p = pics.get(name); p.total++; p.completed += status === 'completed'; p.delayed += status === 'delay';
+        if (p.min === undefined || r.month < p.min) p.min = r.month;
+        if (p.max === undefined || r.month > p.max) p.max = r.month;
       }
       if (!companies.has(r.company)) companies.set(r.company, {name:r.company, total:0, delayed:0, services:new Set()});
       const c = companies.get(r.company); c.total++;
       if (status === 'delay') { c.delayed++; c.services.add(r.service); }
     }
     const risks = [...companies.values()].filter(c => c.delayed).map(c => ({...c, rate:c.delayed/c.total, risk:c.delayed/c.total >= .5 ? 'High' : c.delayed/c.total >= .25 ? 'Medium' : 'Low'})).sort((a,b) => b.rate-a.rate || b.delayed-a.delayed || a.name.localeCompare(b.name));
-    return {total:selected.length, companies:companies.size, delayed:risks.reduce((n,c)=>n+c.delayed,0), pics:[...pics.values()].sort((a,b)=>b.completed/b.total-a.completed/a.total || a.name.localeCompare(b.name)), risks};
+    return {total:selected.length, companies:companies.size, delayed:risks.reduce((n,c)=>n+c.delayed,0), pics:[...pics.values()].sort((a,b)=>b.completed-a.completed || a.name.localeCompare(b.name)), risks};
   }
 
   // A single JPEG page embedded in a standards-compatible PDF preserves all font glyphs.
@@ -72,13 +74,17 @@
     line(112);
     text(data.total+' tasks',32,138,15,'#173758',true);text(data.companies+' companies',200,138,15,'#173758',true);text(data.delayed+' delayed tasks',385,138,15,'#d64550',true);
     band('1. PIC completion analysis',173);
-    text('PIC',42,204,9,'#63758b',true);text('Assigned',235,204,9);text('PIC done',310,204,9);text('Delayed',390,204,9);text('Completion',470,204,9);
+    text('PIC',42,204,9,'#63758b',true);text('Period (from - to)',180,204,9,'#63758b',true);text('Tasks',355,204,9,'#63758b',true);text('Completion',470,204,9,'#63758b',true);
     const visiblePics=data.pics.slice(0,8);
-    visiblePics.forEach((p,i)=>{const y=228+i*23;text(p.name,42,y,10,'#173758',true,180);text(p.total,250,y);text(p.completed,325,y);text(p.delayed,405,y);text(percent(p.completed,p.total),485,y,10,'#12956d',true);line(y+8);});
+    visiblePics.forEach((p,i)=>{const y=228+i*23;const period=p.min!==undefined?monthLabel(p.min)+' - '+monthLabel(p.max):'-';text(p.name,42,y,10,'#173758',true,125);text(period,180,y,10,'#173758',false,155);text(p.completed,360,y);text(percent(p.completed,p.total),485,y,10,'#12956d',true);line(y+8);});
     if(!visiblePics.length) text('No assigned PIC records in this month range.',42,228);
-    if(data.pics.length && data.pics.length <= 6) { const best=data.pics[0], lowest=data.pics[data.pics.length-1]; text('Highest completion: '+best.name+' ('+percent(best.completed,best.total)+')',42,377,10,'#12956d',true); text('Follow-up priority: '+lowest.name+' ('+percent(lowest.completed,lowest.total)+' personal completion)',42,396,10); }
-    text('Personal completion = PIC completed / assigned tasks. Boss completions excluded.',32,426,8,'#63758b');
-    text('Jia Wen and Unassigned excluded from PIC analysis. '+(data.pics.length>8?'Top 8 of '+data.pics.length+' PICs shown by completion rate.':''),32,440,8,'#63758b');
+    else {
+      const best=data.pics[0];
+      text('Who did the most tasks: '+best.name+' ('+best.completed+' of '+best.total+' assigned, '+percent(best.completed,best.total)+'), all services.',42,418,9,'#12956d',true,520);
+      text('Next: '+visiblePics.slice(1,4).map(p=>p.name+' ('+p.completed+' tasks from '+monthLabel(p.min)+' to '+monthLabel(p.max)+')').join('  |  '),42,436,8,'#63758b',false,520);
+    }
+    text('For all services combined. Period = first to last month with assigned tasks in the selected range.',32,454,8,'#63758b');
+    text('Jia Wen and Unassigned excluded from PIC analysis. '+(data.pics.length>8?'Top 8 of '+data.pics.length+' PICs ranked by tasks done.':'Ranked by tasks done.'),32,466,8,'#63758b');
     band('2. Companies requiring attention',478);
     text('Company / affected services',42,508,9,'#63758b',true);text('Delayed',355,508,9);text('Share',425,508,9);text('Risk',505,508,9);
     data.risks.slice(0,6).forEach((c,i)=>{const y=535+i*32;const color=c.risk==='High'?'#ca3147':c.risk==='Medium'?'#a96700':'#346886';text(c.name,42,y,9,'#173758',true,300);text([...c.services].sort().join(', '),42,y+12,8,'#63758b',false,300);text(c.delayed+' / '+c.total,355,y,9);text(percent(c.delayed,c.total),425,y,9);text(c.risk,505,y,9,color,true);line(y+19);});
