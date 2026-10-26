@@ -816,7 +816,7 @@
                 <div class="company-detail-title" id="companyDetailTitle"></div>
               </div>
             </div>
-            <div class="company-selection-bar"><label>Select company<select id="companySelect"></select></label></div>
+            <div class="company-selection-bar"><label>Select company<select id="companySelect"></select></label><label>Select service<select id="timelineServiceSelect" aria-label="Timeline service"></select></label></div>
           </div>
           <div class="chart" id="chart"></div>
         </div>
@@ -946,6 +946,7 @@
         (state.service !== "E-Invoice" || state.invoiceType === "All Types" || row.invoiceType === state.invoiceType));
     }
     let availableCompanies = [];
+    let timelineService = "All Services";
     function buildCompanyBoxes(rows) {
       availableCompanies = [...new Set(rows.map(row => row.company))].sort((a,b) => a.localeCompare(b));
       if (!availableCompanies.includes(state.detailCompany)) state.detailCompany = "All Companies";
@@ -953,11 +954,19 @@
       document.getElementById("companyDetailTitle").textContent = state.detailCompany === "All Companies" ? "Company PIC Work Timeline" : state.detailCompany;
       document.getElementById("companySelect").replaceChildren(new Option("Select a company", "All Companies", false, state.detailCompany === "All Companies"), ...availableCompanies.map(company => new Option(company, company, false, company === state.detailCompany)));
     }
+    function renderTimelineServices() {
+      const available = services.filter(service => activeDashboardCompanyData.some(row => row.company === state.detailCompany && row.service === service));
+      if (!available.includes(timelineService)) timelineService = "All Services";
+      const select = document.getElementById("timelineServiceSelect");
+      select.replaceChildren(...["All Services", ...available].map(service => new Option(service, service, false, service === timelineService)));
+      select.disabled = state.detailCompany === "All Companies";
+    }
     function renderCompanyTimeline(months) {
+      renderTimelineServices();
       const chart = document.getElementById("chart");
       if (state.detailCompany === "All Companies") { chart.innerHTML = '<p class="timeline-empty">Select a company to see the work completed by each PIC, month by month.</p>'; return; }
       const selected = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => row.company === state.detailCompany && selected.has(row.month) && KpiCore.rawStatus(row) === "completed");
+      const rows = activeDashboardCompanyData.filter(row => row.company === state.detailCompany && (timelineService === "All Services" || row.service === timelineService) && selected.has(row.month) && KpiCore.rawStatus(row) === "completed");
       const groups = new Map();
       for (const row of rows) {
         const key = JSON.stringify([row.pic, row.service]);
@@ -978,7 +987,7 @@
         }
         content += '</tr>';
       }
-      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. All PICs and services for this company are included; the selected month range applies.</p>';
+      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. Counts include all PICs for the selected company, service and month range.</p>';
     }
     function renderPicSummary(months) {
       const panel = document.getElementById("picSummary");
@@ -1235,6 +1244,7 @@ document.getElementById("serviceBreakdown").innerHTML =
     }
     document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
+    document.getElementById("timelineServiceSelect").addEventListener("change", event => { timelineService = event.target.value; render(); });
     document.getElementById("companySelect").addEventListener("change", event => {
       state.detailCompany = event.target.value; state.company = state.detailCompany; state.trendOpen = true; render();
     });

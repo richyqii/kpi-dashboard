@@ -15,6 +15,13 @@ test('company timeline shows actual PIC/service monthly quantities and no keywor
   const cells=await page.locator('.company-timeline tbody tr').evaluateAll(nodes=>nodes.flatMap(tr=>[...tr.querySelectorAll('.timeline-cell')].map(cell=>({pic:tr.dataset.pic,service:tr.dataset.service,month:cell.dataset.month,count:Number(cell.dataset.count),text:cell.textContent}))));
   expect(cells.reduce((n,c)=>n+c.count,0)).toBe(rows.length);
   for(const cell of cells){expect(cell.count).toBe(rows.filter(r=>r.pic===cell.pic&&r.service===cell.service&&r.month===cell.month).length);if(cell.count)expect(cell.text).toBe(String(cell.count));}
+  for(const service of [...new Set(rows.map(r=>r.service))]){
+   await page.locator('#timelineServiceSelect').selectOption(service);
+   await expect(page.locator('#timelineTaskCount')).toHaveText(String(rows.filter(r=>r.service===service).length));
+   const shown=await page.locator('.company-timeline tbody tr').evaluateAll(nodes=>nodes.map(n=>n.dataset.service));
+   expect(shown.every(value=>value===service)).toBe(true);
+  }
+  await page.locator('#timelineServiceSelect').selectOption('All Services');
  }
  const company=companies[0];await page.locator('#companySelect').selectOption(company);
  const initial=await page.locator('#chart').innerHTML();
