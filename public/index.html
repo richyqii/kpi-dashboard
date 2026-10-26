@@ -1061,7 +1061,7 @@ document.getElementById("serviceBreakdown").innerHTML =
         rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value); if (status in counts) counts[status]++; });
         const total = keys.reduce((sum, key) => sum + counts[key], 0);
         const active = total;
-        const rate = active ? ((metric === "completed" ? counts.completed : counts.delay) / active * 100).toFixed(1) + "%" : "\u2014";
+        const rate = active ? ((metric === "completed" ? counts.completed + counts.notApplicable : counts.delay) / active * 100).toFixed(1) + "%" : "\u2014";
         const description = labels.map((label, i) => label + ": " + counts[keys[i]]).join(", ");
         const segments = keys.map((key, i) => '<span style="width:' + (total ? counts[key] / total * 100 : 0) + '%;background:' + fills[i] + '" title="' + labels[i] + ': ' + counts[key] + '"></span>').join("");
         return '<div class="service-breakdown-row"><strong>' + escapeHtml(service) + '</strong><div class="service-stacked-bar" role="img" aria-label="' + escapeHtml(service + '. ' + description) + '">' + segments + '</div><strong class="service-breakdown-rate">' + rate + '</strong></div>';
