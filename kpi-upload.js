@@ -2,9 +2,8 @@
   const $ = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const dialog = $('uploadWorkflow');
-  let activeVersion = null, draft = null, file = null, busy = false, committing = false, ready = false, requestGeneration = 0, currentChanges = [];
+  let activeVersion = null, draft = null, file = null, busy = false, committing = false, ready = false, requestGeneration = 0;
   let historyRequest = null;
-  const steps = ['Confirm Upload', 'Validating Document', 'KPI Changes Detected', 'Update Successful'];
   async function api(path, options = {}) {
     const response = await fetch('/api/' + path, { ...options, headers: { ...(options.body && typeof options.body === 'string' ? { 'Content-Type': 'application/json' } : {}), ...options.headers }, cache: 'no-store' });
     let data;
@@ -18,8 +17,8 @@
   }
   function screen(stage, title, message, content = '', actions = []) {
     $('workflowError').hidden = true;
-    $('workflowSteps').hidden = !stage;
-    $('workflowSteps').innerHTML = steps.map((label, index) => `<li class="${stage === index + 1 ? 'current' : ''}" ${stage === index + 1 ? 'aria-current="step"' : ''}>${index + 1}. ${label}</li>`).join('');
+    $('workflowSteps').hidden = true;
+    $('workflowSteps').replaceChildren();
     $('workflowTitle').textContent = title;
     $('workflowMessage').textContent = message;
     $('workflowBody').innerHTML = content;
@@ -63,139 +62,48 @@
     dialog.close();
   }
   const cancel = { label: 'Cancel', run: close };
-  function countsHTML(result) {
-    return `<div class="workflow-summary">${Object.entries(result.counts || {}).filter(([, count]) => count > 0).map(([name, count]) => `<div>${escape(name)}<strong>${count}</strong></div>`).join('')}</div>`;
-  }
-  function simpleSummary(result) {
-    const status = row => escape(row?.displayStatus || KpiCore.label[row?.status] || '—');
-    const fmtMonth = value => {
-      const month = String(value || '');
-      if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(month)) return escape(month);
-      return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'][Number(month.slice(5)) - 1] + ' ' + month.slice(0, 4);
-    };
-    const ico = path => `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${path}"/></svg>`;
-    const icons = {
-      company: ico('M4 21V3h9v4h7v14H4zm2-2h2v-2H6v2zm0-4h2v-2H6v2zm0-4h2V9H6v2zm5 8h2v-2h-2v2zm0-4h2v-2h-2v2zm0-4h2V9h-2v2zm5 8h3V9h-3v10z'),
-      period: ico('M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z'),
-      completion: ico('M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.4L6.6 12.2l1.4-1.4 2.8 2.8 6-6 1.4 1.4z')
-    };
-    const group = name => result.changes.filter(change => change.category === name);
-    const assignment = group('Assignment Changes'), period = group('Monthly Updates'), completion = group('Status Changes');
-    const monthsOf = list => list.map(change => (change.old || change.next)?.month).filter(Boolean).sort();
-    const span = list => {
-      const months = monthsOf(list);
-      return months.length ? `${fmtMonth(months[0])} to ${fmtMonth(months[months.length - 1])}` : '';
-    };
-    const cards = [
-      { count: assignment.length, label: 'Company Changes (add/remove)', desc: 'Companies with tasks added or removed compared with the current baseline.', note: '', icon: icons.company },
-      { count: period.length, label: 'Period Changes', desc: 'Reporting months added or removed compared with the current baseline.', note: span(period) ? `${span(period)}` : '', icon: icons.period },
-      { count: completion.length, label: 'PIC Completion Changes', desc: 'PIC completion quantity changed compared with the current baseline.', note: '', icon: icons.completion }
-    ];
-    const exampleItem = (title, icon, list, render) => {
-      if (!list.length) return '';
-      const example = list.find(change => change.old && change.next) || list[0];
-      const row = example.next || example.old;
-      return `<div class="change-example-row">${icon}<div><h5>${title}</h5><p>${escape(row.company)} · ${escape(row.service)}</p><p class="change-example-detail">${render(example)}</p></div></div>`;
-    };
-    const fieldDiff = example => example.old && example.next
-      ? (['pic', 'company', 'service', 'role'].filter(key => example.old[key] !== example.next[key]).map(key => `${{ pic: 'PIC', company: 'Company', service: 'Service', role: 'Role' }[key]}: ${escape(example.old[key])} → <strong>${escape(example.next[key])}</strong>`).join('<br>') || `<strong>${escape(example.kind)}</strong>`)
-      : `<strong>${escape(example.kind)}</strong>`;
-    const periodText = example => {
-      const row = example.old || example.next;
-      return `${fmtMonth(row.month)} ${example.kind.includes('removed') ? 'record removed' : 'record added'}`;
-    };
-    const completionText = example => `<span class="change-status ${escape(example.old.status)}">${status(example.old)}</span> → <span class="change-status ${escape(example.next.status)}">${status(example.next)}</span>`;
-    const examples = [
-      exampleItem('Company Assignment', icons.company, assignment, fieldDiff),
-      exampleItem('Reporting Period Change', icons.period, period, periodText),
-      exampleItem('PIC Completion Change', icons.completion, completion, completionText)
-    ].join('');
-    return `<div class="change-summary-head"><h3 class="change-summary-title">Excel Changes Summary</h3><p class="workflow-note">Compared with the current baseline: <strong>${escape(activeVersion?.fileName || 'no baseline saved yet')}</strong></p></div><div class="change-total"><span>Total Monthly Records Affected</span><strong>${result.changedRecords}</strong><span class="change-total-note">Unique records with changes</span></div><div class="change-metric-cards">${cards.map(card => `<article class="change-metric-card">${card.icon}<strong>${card.count}</strong><span>${escape(card.label)}</span>${card.desc ? `<em>${escape(card.desc)}</em>` : ''}${card.note ? `<em>${escape(card.note)}</em>` : ''}</article>`).join('')}</div><div class="change-examples"><h4>Example changes</h4>${examples || '<p class="workflow-note">No example changes.</p>'}</div>`;
-  }
-  function changeTable(changes) {
-    currentChanges = changes;
-    const display = { 'Status Changes': 'PIC Completion Changes', 'Assignment Changes': 'Company Changes (add/remove)', 'Monthly Updates': 'Period Changes' };
-    const groups = ['Status Changes', 'Assignment Changes', 'Monthly Updates'].filter(name => changes.some(change => change.category === name));
-    return `<div class="workflow-tools"><label>Search changes<input id="changeSearch" class="workflow-input" type="search" placeholder="PIC, company, service, month or status"></label><label>Change group<select id="changeGroup" class="workflow-input"><option value="">All groups</option>${groups.map(name => `<option value="${name}">${display[name]}</option>`).join('')}</select></label></div><p id="changeCount" class="workflow-note" aria-live="polite"></p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr>${['Change', 'PIC', 'Company', 'Service', 'Role', 'Month', 'Task', 'Old status', 'New status'].map(name => `<th scope="col">${name}</th>`).join('')}</tr></thead><tbody id="changeRows"></tbody></table></div>`;
-  }
-  const groupName = name => ({ 'Status Changes': 'PIC Completion Changes', 'Assignment Changes': 'Company Changes (add/remove)', 'Monthly Updates': 'Period Changes' })[name] || name;
-  function renderChanges() {
-    const search = $('changeSearch').value.toLowerCase(), category = $('changeGroup').value;
-    const filtered = currentChanges.filter(change => (!category || change.category === category) && JSON.stringify(change).toLowerCase().includes(search));
-    $('changeCount').textContent = `${filtered.length} of ${currentChanges.length} changes. Old assignments are shown below changed values.`;
-    let previous = '';
-    $('changeRows').innerHTML = filtered.map(change => {
-      const group = previous !== change.category ? `<tr class="group-row"><th colspan="9">${escape(groupName(change.category))}</th></tr>` : '';
-      previous = change.category;
-      const row = change.next || change.old;
-      const cells = ['pic', 'company', 'service', 'role', 'month', 'task'].map(key => `<td>${escape(row[key])}${change.old && change.next && change.old[key] !== change.next[key] ? `<span class="old-value">Previously: ${escape(change.old[key])}</span>` : ''}</td>`).join('');
-      const status = value => value ? (value.displayStatus || KpiCore.label[value.status]) : '—';
-      return `${group}<tr><td>${escape(change.kind)}</td>${cells}<td>${escape(status(change.old))}</td><td>${escape(status(change.next))}</td></tr>`;
-    }).join('') || '<tr><td colspan="9" class="workflow-empty">No matching changes.</td></tr>';
-  }
-  function bindTable() {
-    $('changeSearch').addEventListener('input', renderChanges);
-    $('changeGroup').addEventListener('change', renderChanges);
-    renderChanges();
-  }
-  function review() {
-    busy = false;
-    const initial = draft.firstImport, noChanges = !initial && !draft.changes.length && draft.kind !== 'selection';
-    let content = `<p class="workflow-note">${escape(draft.fileName)}${draft.kind === 'rollback' ? ' · Restoring an earlier version; history will be retained.' : ''}</p>`;
-    if (draft.kind === 'selection' && !draft.changes.length) content += '<p>No KPI differences were found. You can still confirm this saved file as the baseline.</p>';
-    if (initial) content += '<p>This is the first import. No previous file exists, so no changes are reported. Approval will create the initial baseline.</p>';
-    else if (noChanges) content += '<p>The selected file matches the saved baseline. No data or version history will be changed.</p>';
-    else content += simpleSummary(draft);
-    if (!initial && !noChanges) content += '<details id="changeDetails" class="change-details"><summary>View Details</summary><p class="workflow-note">Full change list and optional assignment matching. A monthly record may appear in more than one category.</p>';
-    if (draft.warnings?.length) content += `<ul class="workflow-note">${draft.warnings.map(warning => `<li>${escape(warning)}</li>`).join('')}</ul>`;
-    if (!initial && !noChanges) content += changeTable(draft.changes) + '</details>';
-    screen(3, noChanges ? 'No Changes Detected' : 'KPI Changes Detected', noChanges ? 'The saved baseline is unchanged.' : initial ? 'Ready to create the initial baseline.' : 'Document validated successfully. No changes have been applied yet.', content, [cancel, ...(!noChanges ? [{ label: 'Update Successful', primary: true, id: 'approveUpdate', run: commit }] : [])]);
-    if (!initial && !noChanges) bindTable();
-  }
-  async function validate() {
-    if (busy) return;
+  async function checkUploadName() {
+    if (busy || committing || !file) return;
     busy = true;
-    const generation = ++requestGeneration;
-    screen(2, 'Validating Document', 'Checking KPI worksheets, monthly statuses, PIC assignments and company records…', '<p role="status"><span class="workflow-spinner" aria-hidden="true"></span>Validating the document and comparing it with the saved baseline.</p><p class="workflow-note">The saved data will not change during validation.</p>', [cancel]);
+    const selected = file, generation = ++requestGeneration;
+    screen(0, 'Making changes...', 'Checking Version History before applying your uploaded document.', '<p>' + escape(selected.name) + '</p>', [cancel]);
     try {
-      const result = await api('preview', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-File-Name': encodeURIComponent(file.name), 'X-Baseline-Id': activeVersion?.id || '' }, body: file });
-      if (generation !== requestGeneration) { api('drafts/' + result.id, { method: 'DELETE' }).catch(() => {}); return; }
-      draft = result;
-      review();
+      const data = await api('versions', { signal: AbortSignal.timeout(15000) });
+      if (generation !== requestGeneration || file !== selected) return;
+      busy = false;
+      const normalize = name => String(name).normalize('NFKC').trim().toLowerCase();
+      if (data.versions.some(version => normalize(version.fileName) === normalize(selected.name))) {
+        screen(0, 'File Name Already Exists', 'A file with this name is already in Version History. Do you want to use the newly uploaded version?', '<p><strong>' + escape(selected.name) + '</strong></p><p>The new file will become the current baseline. The previous version will remain in Version History. Cancel leaves the dashboard unchanged.</p>', [cancel, { label: 'Use New Version', primary: true, run: applyUpload }]);
+      } else await applyUpload();
     } catch (error) {
       if (generation !== requestGeneration) return;
       busy = false;
-      screen(2, 'Validation Failed', 'The saved baseline has not been changed.', '<p class="workflow-note">Correct the document and select it again.</p>', [{ label: 'Close', run: close }]);
+      screen(0, 'Unable to check file name', 'The file has not been applied. Retry to check Version History.', '', [cancel, { label: 'Retry', primary: true, run: checkUploadName }]);
       showError(error);
-      if (error.status === 409) await loadCurrent();
     }
   }
-  async function commit() {
-    if (committing || busy || !draft) return;
-    committing = true;
-    dialog.querySelectorAll('button, input, select').forEach(control => control.disabled = true);
-    $('workflowMessage').textContent = 'Saving the approved version…';
+  async function applyUpload() {
+    if (busy || committing || !file) return;
+    busy = true; committing = true;
+    const selected = file;
+    screen(0, 'Making changes...', 'Using your uploaded document to update the dashboard.', '<p role="status"><span class="workflow-spinner" aria-hidden="true"></span>Making changes...</p><p>'+escape(selected.name)+'</p>', []);
+    let saving = false;
     try {
-      const result = await api('commit', { method: 'POST', body: JSON.stringify({ draftId: draft.id, approved: true }) });
-      if (result.noChanges) { committing = false; review(); return; }
+      if (!draft) draft = await api('preview', {method:'POST',headers:{'Content-Type':'application/octet-stream','X-File-Name':encodeURIComponent(selected.name),'X-Baseline-Id':activeVersion?.id || ''},body:selected});
+      saving = true;
+      const result = await api('commit', {method:'POST',body:JSON.stringify({draftId:draft.id,approved:true,useUploadedFile:true})});
       activeVersion = result.version;
       showVersionMeta(activeVersion);
       window.KpiDashboard.apply(result.rows, result.version.fileName);
-      $('uploadStatus').textContent = 'The KPI Dashboard has been updated successfully. This file is now the shared baseline.';
-      const changes = result.changes, version = result.version;
-      draft = null; file = null; $('excelUpload').value = ''; committing = false;
-      screen(4, 'Update Successful', 'The KPI Dashboard has been updated successfully.', `<p class="workflow-success">${version.kind === 'rollback' ? 'Rollback saved as a new version.' : 'The approved file is now the shared baseline.'}</p><p>${escape(version.fileName)}</p>${countsHTML(version.summary)}<p class="workflow-note">${version.summary.records} monthly tasks saved. Overall Status Chart and Monthly Status Trend have been refreshed.</p>`, [{ label: 'View Changes', run: () => viewChanges(version, changes) }, { label: 'Done', primary: true, run: close }]);
-    } catch (error) {
-      committing = false;
-      $('workflowFooter').querySelectorAll('button').forEach(button => button.disabled = false);
-      $('workflowMessage').textContent = 'The update could not be confirmed. Retry safely or close and refresh the saved version.';
-      $('workflowBody').querySelectorAll('button, input, select').forEach(control => control.disabled = false);
+      $('uploadStatus').textContent = 'Now using '+result.version.fileName;
+      draft = null; file = null; $('excelUpload').value = ''; busy = false; committing = false;
+      screen(0, 'Update Successful', 'The dashboard is now using your uploaded file.', '<p class="workflow-success">'+escape(result.version.fileName)+'</p><p class="workflow-note">Saved in Version History. The dashboard has been refreshed.</p>', [{label:'Done',primary:true,run:close}]);
+    } catch(error) {
+      busy = false; committing = false;
+      screen(0, saving ? 'Update could not be confirmed' : 'Unable to use this file', saving ? 'Retry to confirm the update, or close and refresh the dashboard to check the current file.' : 'The saved baseline has not been changed.', '', [...(saving ? [{label:'Retry',primary:true,run:applyUpload}] : []), {label:'Close',run:close}]);
       showError(error);
+      if (error.status === 409) { draft = null; await loadCurrent(); }
     }
-  }
-  function viewChanges(version, changes) {
-    screen(0, 'View Changes', version.fileName, changes.length ? countsHTML(version.summary) + changeTable(changes) : !version.summary.firstImport ? '<p>No KPI differences were found for this update.</p>' : '<p>This version created the initial baseline. There was no previous file to compare.</p>', [{ label: 'Version History', run: history }, { label: 'Close', run: close }]);
-    if (changes.length) bindTable();
   }
   async function history() {
     const generation = ++requestGeneration;
@@ -212,7 +120,7 @@
     }
   }
   function renderHistory(data) {
-    screen(0, 'Version History', 'Use This Version validates the saved document and shows its changes. Click Update Successful after reviewing to apply it as the shared baseline.', `<div class="workflow-history">${data.versions.map((version, index) => `<article class="workflow-version"><div><strong>${escape(version.fileName)}</strong><p class="workflow-note">${escape(new Date(version.createdAt).toLocaleString('en-GB', { timeZone: 'Asia/Singapore' }))} (Singapore) · ${escape(version.kind)} · ${version.summary.records} tasks${version.id === data.currentId ? ' · Current baseline' : ''}</p></div><div class="workflow-version-actions">${version.id !== data.currentId ? `<button type="button" class="workflow-button history-restore" data-index="${index}">Use This Version</button>` : ''}</div></article>`).join('') || '<p>No approved versions yet.</p>'}</div>`, [{ label: 'Close', run: close }]);
+    screen(0, 'Version History', 'Use This Version immediately makes the selected file the shared baseline and refreshes the dashboard.', `<div class="workflow-history">${data.versions.map((version, index) => `<article class="workflow-version"><div><strong>${escape(version.fileName)}</strong><p class="workflow-note">${escape(new Date(version.createdAt).toLocaleString('en-GB', { timeZone: 'Asia/Singapore' }))} (Singapore) · ${escape(version.kind)} · ${version.summary.records} tasks${version.id === data.currentId ? ' · Current baseline' : ''}</p></div><div class="workflow-version-actions">${version.id !== data.currentId ? `<button type="button" class="workflow-button history-restore" data-index="${index}">Use This Version</button>` : ''}</div></article>`).join('') || '<p>No approved versions yet.</p>'}</div>`, [{ label: 'Close', run: close }]);
     document.querySelectorAll('.workflow-version-actions').forEach((actions, index) => {
       const version = data.versions[index];
       const button = document.createElement('button');
@@ -226,24 +134,25 @@
       button.addEventListener('click', () => confirmRemove(version));
       actions.append(button);
     });
-    document.querySelectorAll('.history-restore').forEach(button => button.addEventListener('click', () => validateVersion(data.versions[button.dataset.index], data.currentId)));
+    document.querySelectorAll('.history-restore').forEach(button => button.addEventListener('click', () => useVersion(data.versions[button.dataset.index], data.currentId)));
   }
-  async function validateVersion(version, baselineId, applyAfterValidation = false) {
-    if (busy) return;
-    busy = true; draft = null;
-    const generation = ++requestGeneration;
-    screen(2, 'Validating Document', 'Checking Accounting, Payroll, E-Invoice and SST records, monthly statuses, PIC assignments and company records…', '<p role="status"><span class="workflow-spinner" aria-hidden="true"></span>Validating the saved document and comparing it with the current baseline.</p><p>' + escape(version.fileName) + '</p>', [cancel]);
+  async function useVersion(version, baselineId) {
+    if (busy || committing) return;
+    busy = true; committing = true; draft = null;
+    screen(0, 'Making changes...', 'Using the selected saved file to update the dashboard.', '<p role="status"><span class="workflow-spinner" aria-hidden="true"></span>Making changes...</p><p>' + escape(version.fileName) + '</p>', []);
     try {
-      const result = await api('rollback-preview', { method: 'POST', body: JSON.stringify({ versionId: version.id, expectedVersionId: baselineId }) });
-      if (generation !== requestGeneration) { api('drafts/' + result.id, { method: 'DELETE' }).catch(() => {}); return; }
-      draft = result;
-      if (applyAfterValidation) { busy = false; await commit(); }
-      else review();
+      const result = await api('use-version', { method: 'POST', body: JSON.stringify({ versionId: version.id, expectedVersionId: baselineId }) });
+      activeVersion = result.version;
+      showVersionMeta(activeVersion);
+      window.KpiDashboard.apply(result.rows, result.version.fileName);
+      $('uploadStatus').textContent = 'Now using ' + result.version.fileName;
+      file = null; $('excelUpload').value = ''; busy = false; committing = false;
+      screen(0, 'Update Successful', 'The dashboard is now using the selected version.', '<p class="workflow-success">' + escape(result.version.fileName) + '</p><p class="workflow-note">This file is now the shared baseline. Version History has been retained.</p>', [{ label: 'Done', primary: true, run: close }]);
     } catch (error) {
-      if (generation !== requestGeneration) return;
-      busy = false;
-      screen(2, 'Validation Failed', 'The saved baseline has not been changed.', '', [{ label: 'Version History', run: history }, { label: 'Close', run: close }]);
+      busy = false; committing = false;
+      screen(0, 'Update could not be confirmed', 'Retry or reopen Version History to check the current baseline.', '', [{ label: 'Retry', primary: true, run: () => useVersion(version, baselineId) }, { label: 'Version History', run: history }, { label: 'Close', run: close }]);
       showError(error);
+      if (error.status === 409) await loadCurrent();
     }
   }
 
@@ -269,10 +178,11 @@
       } }]);
   }
   $('excelUpload').addEventListener('change', event => {
+    if (busy || committing) return;
     file = event.target.files?.[0];
     if (!file || !ready) return;
     draft = null;
-    validate();
+    checkUploadName();
   });
   $('versionHistory').addEventListener('click', () => history().catch(error => { screen(0, 'Version History', '', '', [{ label: 'Close', run: close }]); showError(error); }));
   dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });

@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const origin = 'http://127.0.0.1:4173';
+const origin = process.env.KPI_TEST_ORIGIN || 'http://127.0.0.1:4173';
 async function post(request, url, data) { return request.post(url, { headers: { Origin: origin }, data }); }
 async function resetBaseline(request) {
   const current = await (await request.get('/api/current')).json();

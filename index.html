@@ -168,14 +168,6 @@
       background: #fff;
       font: inherit;
     }
-    .date-summary {
-      padding: 9px 12px;
-      border-radius: 8px;
-      color: #23466f;
-      background: #edf5ff;
-      font-size: 13px;
-      font-weight: 650;
-    }
     .rules {
       margin-top: 14px;
       padding: 12px 14px;
@@ -440,24 +432,6 @@
       color: var(--ink);
       font-size: 18px;
     }
-    .status-select-all {
-      cursor: pointer;
-      width: 100%;
-      border: 1px solid #cbd9eb;
-      border-radius: 8px;
-      padding: 9px 10px;
-      color: #23466f;
-      background: #edf5ff;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 850;
-      text-align: center;
-    }
-    .status-select-all.active {
-      color: #fff;
-      border-color: var(--blue);
-      background: var(--blue);
-    }
     .company-detail-panel {
       margin-top: 14px;
       padding: 14px;
@@ -708,7 +682,7 @@
       .status-donut { margin: 0 auto; }
     }
   </style>
-  <link rel="stylesheet" href="kpi-header.css?v=20261023h">
+  <link rel="stylesheet" href="kpi-header.css?v=20261024a">
 </head>
 <body>
   <header>
@@ -749,7 +723,6 @@
             <label for="toDate">To</label>
             <input class="date-input" id="toDate" type="month">
           </div>
-          <div class="date-summary" id="dateSummary"></div>
         </div>
       </div>
       <div class="status-metrics">
@@ -762,7 +735,6 @@
                 <span>Completion<br>Rate</span>
               </div>
             </div>
-            <button type="button" class="status-select-all" id="selectAllStatusButton">Select All</button>
           </div>
           <details class="completion-calc-box"><summary>Completion rate calculation</summary>
             <div class="completion-calc-label">Complete Rate Calculation</div>
@@ -816,7 +788,7 @@
                 <div class="company-detail-title" id="companyDetailTitle"></div>
               </div>
             </div>
-            <div class="company-selection-bar"><label>Search company<input id="companySearch" type="search" placeholder="Type a company keyword"></label><label>Select company<select id="companySelect"></select></label><span id="companySearchCount" role="status"></span></div>
+            <div class="company-selection-bar"><label>Search company<input id="companySearch" type="search" placeholder="Type a company keyword" autocomplete="off"><div id="companySearchResults" class="company-search-results" hidden><div class="company-search-heading">Related keyword</div><div id="companySearchMatches" class="company-search-matches"></div></div></label><label>Select company<select id="companySelect"></select></label><span id="companySearchCount" role="status"></span></div>
           </div>
           <div class="chart" id="chart"></div>
         </div>
@@ -838,7 +810,7 @@
     </section>
 
     <section class="breakdown-section" aria-label="Service and company overview">
-      <p class="sub breakdown-scope">Selected month range &middot; All PICs, roles and invoice types</p>
+      <p class="sub breakdown-scope">Service Breakdown: all reporting months and all assignments. PIC Efficiency Comparison: selected month range.</p>
       <div class="breakdown-grid">
         <section class="panel service-breakdown-panel">
           <div class="breakdown-head"><h2>Service Breakdown</h2><select id="breakdownMetric" aria-label="Service breakdown metric"><option value="completed">By Completion Rate</option><option value="delay">By Delay Rate</option></select></div>
@@ -957,6 +929,24 @@
       if (!values.includes(state.detailCompany)) values.push(state.detailCompany);
       document.getElementById("companySelect").replaceChildren(...values.map(company => new Option(company, company, false, company === state.detailCompany)));
       document.getElementById("companySearchCount").textContent = search ? matches.length + " matching companies" : availableCompanies.length + " companies";
+      const list = document.getElementById("companySearchMatches");
+      const panel = document.getElementById("companySearchResults");
+      const shown = matches.slice(0,8);
+      list.replaceChildren(...shown.map(company => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "company-search-option";
+        option.textContent = company;
+        option.addEventListener("mousedown", event => { event.preventDefault(); pickCompany(company); });
+        return option;
+      }));
+      panel.hidden = !list.childElementCount;
+    }
+    function pickCompany(company) {
+      document.getElementById("companySearch").value = company;
+      state.detailCompany = company; state.company = company; state.trendOpen = true;
+      render();
+      document.getElementById("companySearchResults").hidden = true;
     }
     function buildCompanyBoxes(rows) {
       availableCompanies = [...new Set(rows.map(row => row.company))].sort((a,b) => a.localeCompare(b));
@@ -1054,21 +1044,19 @@
       });
       return [...groups.values()];
     }
-    function renderServiceBreakdown(months) {
-      const selectedMonths = new Set(months);
-      const rows = activeDashboardCompanyData.filter(row => selectedMonths.has(row.month));
+    function renderServiceBreakdown() {
+      // This overview always uses the entire saved file, never dashboard filters.
+      const rows = activeDashboardCompanyData;
+      const reportingCutoff = rows.reduce((latest, row) => row.month > latest ? row.month : latest, "");
       const keys = ["completed", "delay", "notApplicable"];
       const labels = ["PIC Completed", "Delayed", "Boss Completed"];
       const fills = ["#19a477", "#df5a62", "#3984c6"];
       const metric = document.getElementById("breakdownMetric").value;
-      const visibleServices = state.service === "All Services"
-  ? services
-  : [state.service];
 
 document.getElementById("serviceBreakdown").innerHTML =
-  visibleServices.map(service => {
+  services.map(service => {
         const counts = Object.fromEntries(keys.map(key => [key, 0]));
-        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, document.getElementById("toDate").value); if (status in counts) counts[status]++; });
+        rows.filter(row => row.service === service).forEach(row => { const status = KpiCore.effectiveStatus(row, reportingCutoff); if (status in counts) counts[status]++; });
         const total = keys.reduce((sum, key) => sum + counts[key], 0);
         const active = total;
         const rate = active ? ((metric === "completed" ? counts.completed : counts.delay) / active * 100).toFixed(1) + "%" : "\u2014";
@@ -1137,10 +1125,9 @@ document.getElementById("serviceBreakdown").innerHTML =
       if (fromInput.value > toInput.value) toInput.value = fromInput.value;
       const from = fromInput.value;
       const effectiveTo = toInput.value;
-      document.getElementById("dateSummary").textContent = `${monthLabel(from)} to ${monthLabel(effectiveTo)} (inclusive)`;
 
       const months = effectiveTo >= from ? monthsBetween(from, effectiveTo) : [];
-      renderServiceBreakdown(months);
+      renderServiceBreakdown();
       renderPicEfficiency(months);
      const companyRows = filteredCompanyRows();
 
@@ -1202,7 +1189,6 @@ document.getElementById("serviceBreakdown").innerHTML =
       });
 
       document.getElementById("donutNaLegend").textContent = totals["Boss Completed"];
-      document.getElementById("selectAllStatusButton").classList.toggle("active", !state.trendFocus);
       document.getElementById("donutRate").textContent = `${completionRate.toFixed(1)}%`;
       document.getElementById("donutAssignedLegend").textContent = donutTotal + pending;
       document.getElementById("donutCompleteLegend").textContent = totals.Completed;
@@ -1243,20 +1229,16 @@ document.getElementById("serviceBreakdown").innerHTML =
       render();
       document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-    function selectAllStatuses() {
-      state.trendFocus = null;
-      state.trendOpen = true;
-      render();
-      document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-    document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
     document.getElementById("companySearch").addEventListener("input", renderCompanyOptions);
+    document.getElementById("companySearch").addEventListener("focus", renderCompanyOptions);
+    document.getElementById("companySearch").addEventListener("blur", () => setTimeout(() => { document.getElementById("companySearchResults").hidden = true; }, 120));
+    document.getElementById("companySearch").addEventListener("keydown", event => { if (event.key === "Escape") document.getElementById("companySearchResults").hidden = true; });
     document.getElementById("companySelect").addEventListener("change", event => {
       state.detailCompany = event.target.value; state.company = state.detailCompany; state.trendOpen = true; render();
     });
     render();
   </script>
-  <script src="kpi-upload.js?v=20261023d"></script>
+  <script src="kpi-upload.js?v=20261026-direct-upload"></script>
 </body>
 </html>
