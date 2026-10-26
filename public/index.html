@@ -803,7 +803,7 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Monthly Status Trend</h2>
-          <div class="sub">PIC completed tasks by month and company.</div>
+          <div class="sub">Select a company to see completed task quantities for each PIC by month.</div>
         </div>
         <div class="trend-detail" id="trendDetail">
           <div class="legend">
@@ -816,7 +816,7 @@
                 <div class="company-detail-title" id="companyDetailTitle"></div>
               </div>
             </div>
-            <div class="company-selection-bar"><label>Search company<input id="companySearch" type="search" placeholder="Type a company keyword"></label><label>Select company<select id="companySelect"></select></label><span id="companySearchCount" role="status"></span></div>
+            <div class="company-selection-bar"><label>Select company<select id="companySelect"></select></label></div>
           </div>
           <div class="chart" id="chart"></div>
         </div>
@@ -924,10 +924,6 @@
         state[key] = value;
         if (key === "service") state.role = "All Roles";
         if (key === "service") state.invoiceType = "All Types";
-        if (key === "service" || key === "invoiceType") {
-          state.detailCompany = "All Companies";
-          state.company = "All Companies";
-        }
         render();
       };
       if (root.tagName === "SELECT") {
@@ -950,39 +946,39 @@
         (state.service !== "E-Invoice" || state.invoiceType === "All Types" || row.invoiceType === state.invoiceType));
     }
     let availableCompanies = [];
-    function renderCompanyOptions() {
-      const search = document.getElementById("companySearch").value.trim().toLowerCase();
-      const matches = availableCompanies.filter(company => company.toLowerCase().includes(search));
-      const values = ["All Companies", ...matches];
-      if (!values.includes(state.detailCompany)) values.push(state.detailCompany);
-      document.getElementById("companySelect").replaceChildren(...values.map(company => new Option(company, company, false, company === state.detailCompany)));
-      document.getElementById("companySearchCount").textContent = search ? matches.length + " matching companies" : availableCompanies.length + " companies";
-    }
     function buildCompanyBoxes(rows) {
       availableCompanies = [...new Set(rows.map(row => row.company))].sort((a,b) => a.localeCompare(b));
-      if (state.detailCompany !== "All Companies" && !availableCompanies.includes(state.detailCompany)) state.detailCompany = "All Companies";
+      if (!availableCompanies.includes(state.detailCompany)) state.detailCompany = "All Companies";
       state.company = state.detailCompany;
-      document.getElementById("companyDetailTitle").textContent = state.detailCompany;
-      renderCompanyOptions();
+      document.getElementById("companyDetailTitle").textContent = state.detailCompany === "All Companies" ? "Company PIC Work Timeline" : state.detailCompany;
+      document.getElementById("companySelect").replaceChildren(new Option("Select a company", "All Companies", false, state.detailCompany === "All Companies"), ...availableCompanies.map(company => new Option(company, company, false, company === state.detailCompany)));
     }
-    function renderMonthlyBars(monthly) {
-      const visible = statuses.filter(status => status.focus === "complete");
-      const totals = monthly.map(month => visible.reduce((sum,status) => sum + month[status.key],0));
-      const maximum = Math.max(1,...totals), step = Math.max(1,Math.ceil(maximum/5)), top = step*5;
-      const positive = monthly.flatMap(month => visible.map(status => month[status.key])).filter(value => value>0);
-      const smallest = positive.length ? Math.min(...positive) : 1;
-      const plotHeight = Math.max(300, top/smallest*16);
-      const width = Math.max(780,monthly.length*72+90), left=64, yTop=20, bottom=yTop+plotHeight, height=bottom+72;
-      const plotWidth=width-left-20, slot=plotWidth/Math.max(monthly.length,1), barWidth=Math.min(46,slot*.7);
-      let content='';
-      for(let tick=0;tick<=5;tick++){const value=tick*step,y=bottom-value/top*plotHeight;content+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-20)+'" y2="'+y+'" stroke="#e3eaf2"/><text x="'+(left-12)+'" y="'+(y+4)+'" text-anchor="end" class="monthly-axis">'+value+'</text>';}
-      content+='<text transform="translate(16 '+(yTop+plotHeight/2)+') rotate(-90)" text-anchor="middle" class="monthly-axis">Quantity</text><text x="'+(left+plotWidth/2)+'" y="'+(height-10)+'" text-anchor="middle" class="monthly-axis">Month</text>';
-      monthly.forEach((month,index)=>{const x=left+slot*(index+.5)-barWidth/2;let y=bottom;
-        visible.forEach(status=>{const count=month[status.key];if(!count)return;const barHeight=count/top*plotHeight;y-=barHeight;content+='<g class="monthly-segment" data-month="'+month.month+'" data-status="'+status.focus+'" data-count="'+count+'"><title>'+escapeHtml(chartMonthLabel(month.month)+' - '+status.label+': '+count)+'</title><rect x="'+x+'" y="'+y+'" width="'+barWidth+'" height="'+barHeight+'" fill="'+colors[status.key]+'"/><text x="'+(x+barWidth/2)+'" y="'+(y+barHeight/2)+'" dominant-baseline="central" text-anchor="middle" class="monthly-bar-count">'+count+'</text></g>';});
-        if(!totals[index])content+='<text x="'+(x+barWidth/2)+'" y="'+(bottom-8)+'" text-anchor="middle" class="monthly-axis">0</text>';
-        content+='<text x="'+(x+barWidth/2)+'" y="'+(bottom+24)+'" text-anchor="middle" class="monthly-axis">'+chartMonthLabel(month.month)+'</text>';
-      });
-      document.getElementById("chart").innerHTML=monthly.length?'<div class="monthly-bars-scroll"><svg class="monthly-bars" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Monthly PIC completed tasks: month on X-axis and quantity on Y-axis. Counts inside each bar.">'+content+'</svg></div>':'<p>No months selected.</p>';
+    function renderCompanyTimeline(months) {
+      const chart = document.getElementById("chart");
+      if (state.detailCompany === "All Companies") { chart.innerHTML = '<p class="timeline-empty">Select a company to see the work completed by each PIC, month by month.</p>'; return; }
+      const selected = new Set(months);
+      const rows = activeDashboardCompanyData.filter(row => row.company === state.detailCompany && selected.has(row.month) && KpiCore.rawStatus(row) === "completed");
+      const groups = new Map();
+      for (const row of rows) {
+        const key = JSON.stringify([row.pic, row.service]);
+        if (!groups.has(key)) groups.set(key, { pic: row.pic, service: row.service, counts: new Map(), total: 0 });
+        const group = groups.get(key); group.counts.set(row.month, (group.counts.get(row.month) || 0) + 1); group.total++;
+      }
+      const pics = new Set(rows.map(row => row.pic).filter(pic => pic && pic !== "UNASSIGNED"));
+      const palette = { Accounting: "#daf4e8", Payroll: "#deecff", "E-Invoice": "#fff0d2", SST: "#eee5ff" };
+      let content = '<div class="timeline-stats"><div>PICs Involved<strong id="timelinePicCount">' + pics.size + '</strong></div><div>PIC Completed Tasks<strong id="timelineTaskCount">' + rows.length + '</strong></div></div>';
+      if (!groups.size) { chart.innerHTML = content + '<p class="timeline-empty">No PIC-completed tasks recorded for this company in the selected months.</p>'; return; }
+      content += '<div class="company-timeline-scroll"><table class="company-timeline"><caption>Company PIC Work Timeline - ' + escapeHtml(state.detailCompany) + '</caption><thead><tr><th scope="col">PIC / Service</th>' + months.map(month => '<th scope="col">' + escapeHtml(chartMonthLabel(month)) + '</th>').join('') + '</tr></thead><tbody>';
+      for (const group of [...groups.values()].sort((a,b) => a.pic.localeCompare(b.pic) || a.service.localeCompare(b.service))) {
+        const name = group.pic.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        content += '<tr data-pic="' + escapeHtml(group.pic) + '" data-service="' + escapeHtml(group.service) + '"><th scope="row">' + escapeHtml(name) + '<small>' + escapeHtml(group.service) + ' - ' + group.total + ' completed tasks</small></th>';
+        for (const month of months) {
+          const count = group.counts.get(month) || 0;
+          content += '<td><span class="timeline-cell' + (count ? ' has-work' : '') + '" data-month="' + month + '" data-count="' + count + '" style="' + (count ? 'background:' + palette[group.service] : '') + '" title="' + escapeHtml(name + ' - ' + group.service + ' - ' + chartMonthLabel(month) + ': ' + count + ' completed tasks') + '">' + (count || '-') + '</span></td>';
+        }
+        content += '</tr>';
+      }
+      chart.innerHTML = content + '</tbody></table></div><p class="timeline-note">Numbers show PIC-completed tasks from the saved Excel file. A dash means no PIC completion recorded. All PICs and services for this company are included; the selected month range applies.</p>';
     }
     function renderPicSummary(months) {
       const panel = document.getElementById("picSummary");
@@ -1152,12 +1148,8 @@ document.getElementById("serviceBreakdown").innerHTML =
     console.log("Filtered rows:", companyRows.length);
     console.log("Total rows:", activeDashboardCompanyData.length);
     console.log("First filtered record:", companyRows[0]);
-      buildCompanyBoxes(companyRows);
-      const chartRows = state.detailCompany === "All Companies"
-        ? companyRows
-        : companyRows.filter(row => row.company === state.detailCompany);
+      buildCompanyBoxes(activeDashboardCompanyData);
       const statusRows = rollupCompanyMonthStatus(activeDashboardCompanyData, months);
-      const chartStatusRows = rollupCompanyMonthStatus(chartRows, months);
       const pending = 0;
       document.getElementById("pendingTaskNote").textContent = "The selected To month is the cutoff: empty tasks through that month are Delayed; later months are Not Yet Due.";
       const totals = { Completed: 0, Delay: 0, "Not Yet Due": 0, "Boss Completed": 0 };
@@ -1172,14 +1164,6 @@ document.getElementById("serviceBreakdown").innerHTML =
         Object.keys(totals).forEach(k => totals[k] += counts[k]);
         return { month, ...counts };
       });
-      const chartMonthly = months.map(month => ({
-        month,
-        Pending: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notDue, 0),
-        Completed: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.completed, 0),
-        Delay: chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.delay, 0),
-        "Not Yet Due": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.waitApproval, 0),
-        "Boss Completed": chartStatusRows.filter(row => row.month === month).reduce((sum, row) => sum + row.notApplicable, 0)
-      }));
       const active = totals.Completed + totals.Delay + totals["Not Yet Due"] + totals["Boss Completed"];
       document.getElementById("companyKpi").textContent = companyCount(statusRows);
       document.getElementById("trendDetail").classList.toggle("open", state.trendOpen);
@@ -1215,7 +1199,7 @@ document.getElementById("serviceBreakdown").innerHTML =
         const share = donutTotal + pending ? totals[status.key] / (donutTotal + pending) * 100 : 0;
         document.getElementById(status.focus + "Share").textContent = share.toFixed(1) + "%";
       }
-      renderMonthlyBars(chartMonthly);
+      renderCompanyTimeline(months);
 
       renderPicSummary(months);
       renderOverallDelay(months);
@@ -1251,7 +1235,6 @@ document.getElementById("serviceBreakdown").innerHTML =
     }
     document.getElementById("selectAllStatusButton").addEventListener("click", selectAllStatuses);
     document.querySelectorAll(".status-filter").forEach(button => button.addEventListener("click", () => selectTrendStatus(button.dataset.status)));
-    document.getElementById("companySearch").addEventListener("input", renderCompanyOptions);
     document.getElementById("companySelect").addEventListener("change", event => {
       state.detailCompany = event.target.value; state.company = state.detailCompany; state.trendOpen = true; render();
     });

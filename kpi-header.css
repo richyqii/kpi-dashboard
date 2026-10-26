@@ -152,3 +152,18 @@ header .revert-button:focus-visible, header .upload-button:focus-visible { outli
 
 .pic-delay-table-wrap {overflow-x:auto;} .pic-delay-table {width:100%;min-width:560px;} .pic-delay-table th {text-transform:none;} .pic-delayed-count {color:#bd2636;font-weight:700;text-align:center;}
 .overall-delay-visual {display:flex;align-items:center;gap:10px;margin:8px 0 18px;max-width:850px;} .overall-delay-visual i {flex-shrink:0;width:10px;height:10px;border-radius:50%;background:#df5a62;} .overall-delay-visual .pic-breakdown-track {flex:1;height:14px;} #overallDelayLabel {color:#df5a62;font-weight:700;}
+
+.timeline-stats{display:flex;gap:64px;padding:20px 0;color:var(--muted)}
+.timeline-stats strong{display:block;font-size:26px;color:var(--navy);margin-top:6px}
+.company-timeline-scroll{overflow-x:auto;width:100%}
+.company-timeline{width:100%;border-collapse:separate;border-spacing:4px 8px;table-layout:auto}
+.company-timeline caption{text-align:left;font-weight:700;color:var(--navy);padding:8px 0}
+.company-timeline th{font-size:12px;text-align:center;min-width:58px}
+.company-timeline th:first-child{text-align:left;min-width:170px}
+.company-timeline tbody th{font-size:14px}
+.company-timeline small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:6px}
+.timeline-cell{display:flex;align-items:center;justify-content:center;min-width:54px;height:40px;border-radius:7px;background:#edf1f6;color:#758397}
+.timeline-cell.has-work{font-weight:700;color:#123550}
+.timeline-note,.timeline-empty{font-size:13px;color:var(--muted);line-height:1.6;margin:16px 0}
+#chart{min-width:0;max-width:100%}
+@media(max-width:620px){.timeline-stats{gap:28px}.company-timeline th:first-child{min-width:140px}}
