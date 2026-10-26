@@ -4,7 +4,9 @@ GitHub Actions mirrors Version History here automatically, on a five-minute
 schedule (GitHub may delay a run). Use **Actions → Sync KPI documents → Run workflow**
 to request a sync manually. Pull the repository to update the local VS Code folder.
 
-Each version has a separate ID-prefixed Excel file and JSON data snapshot. Older
+Each version has its own ID-named folder containing the Excel file with its exact
+original filename. JSON data snapshots stay beside the version folders. This
+keeps duplicate filenames separate without renaming the uploaded documents. Older
 versions uploaded before original-file storage was added have only a JSON snapshot.
 Uploading the Excel again retains its exact original bytes for future syncs.
 

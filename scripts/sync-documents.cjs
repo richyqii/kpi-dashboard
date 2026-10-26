@@ -5,6 +5,12 @@ const BASE = 'https://kpi-dashboard.vin8228.workers.dev';
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 function filesFor(version) {
   if (!/^(initial-baseline|[a-f0-9-]{36})$/.test(version.id)) throw Error('Invalid version ID');
+  const name = version.fileName;
+  if (typeof name !== 'string' || !name || /[<>:"/\\|?*\x00-\x1f]/.test(name) || /[. ]$/.test(name) || /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(name)) throw Error('Filename cannot be saved unchanged on this filesystem');
+  return { snapshot: `${version.id}.json`, document: version.sha256 ? `${version.id}/${name}` : null };
+}
+function legacyFilesFor(version) {
+  filesFor(version);
   const name = String(version.fileName).normalize('NFKC').replace(/[^a-zA-Z0-9 ._()-]/g, '_').slice(-120).replace(/[. ]+$/g, '');
   return { snapshot: `${version.id}.json`, document: version.sha256 ? `${version.id}--${name || 'document.xlsx'}` : null };
 }
@@ -25,8 +31,14 @@ async function syncDocuments({ root = path.resolve(__dirname, '..'), base = BASE
   // Never follow filesystem links when changing managed files.
   for (const target of [path.resolve(root, 'data'), directory]) if ((await fs.lstat(target)).isSymbolicLink()) throw Error('Sync directory must not be a symbolic link');
   async function local(name) {
-    if (path.basename(name) !== name) throw Error('Invalid managed filename');
+    const parts = name.split('/');
+    if (parts.length > 2 || parts.some(part => !part || part === '.' || part === '..' || /[\\:]/.test(part)) || (parts.length === 2 && !/^(initial-baseline|[a-f0-9-]{36})$/.test(parts[0]))) throw Error('Invalid managed filename');
     const target = path.join(directory, name);
+    if (!target.startsWith(directory + path.sep)) throw Error('Managed path is outside upload directory');
+    if (parts.length === 2) {
+      try { const parent = await fs.lstat(path.dirname(target)); if (!parent.isDirectory() || parent.isSymbolicLink()) throw Error('Version folder must be a real directory'); }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+    }
     try { if (!(await fs.lstat(target)).isFile()) throw Error('Managed path must be a regular file'); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     return target;
@@ -64,13 +76,18 @@ async function syncDocuments({ root = path.resolve(__dirname, '..'), base = BASE
   const latest = validateManifest(await (await request('/api/sync-manifest')).json());
   if (JSON.stringify(latest) !== JSON.stringify(manifest)) throw Error('Version History changed during sync; retry on the next run');
   const deletions = [];
-  for (const version of prior.versions) for (const name of Object.values(filesFor(version))) if (name && !wanted.has(name)) deletions.push(name);
+  for (const version of prior.versions) for (const name of Object.values(prior.layout === 2 ? filesFor(version) : legacyFilesFor(version))) if (name && !wanted.has(name)) deletions.push(name);
   // Resolve and check every target before making changes. Delete only files listed
   // by the previous manifest; never touch baseline.json or manually added files.
   for (const name of [...writes.keys(), ...deletions, 'manifest.json']) await local(name);
-  for (const [name, bytes] of writes) await fs.writeFile(await local(name), bytes);
+  for (const [name, bytes] of writes) {
+    const target = await local(name);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, bytes);
+  }
   for (const name of deletions) await fs.unlink(await local(name)).catch(error => { if (error.code !== 'ENOENT') throw error; });
-  const index = JSON.stringify(manifest, null, 2) + '\n';
+  for (const name of deletions.filter(name => name.includes('/'))) await fs.rmdir(path.dirname(await local(name))).catch(error => { if (!['ENOENT', 'ENOTEMPTY'].includes(error.code)) throw error; });
+  const index = JSON.stringify({ ...manifest, layout: 2 }, null, 2) + '\n';
   if (priorBytes?.toString() !== index) await fs.writeFile(await local('manifest.json'), index);
   return { saved: writes.size, removed: deletions.length, versions: manifest.versions.length };
 }
