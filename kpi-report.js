@@ -82,8 +82,6 @@
       const best=data.pics[0];
       text('Who did the most tasks: '+best.name+' ('+best.completed+' of '+best.total+' assigned), all services.',42,418,9,'#12956d',true,520);
     }
-    text('For all services combined. Period = first to last month with assigned tasks in the selected range.',32,454,8,'#63758b');
-    text('Jia Wen and Unassigned excluded from PIC analysis. '+(data.pics.length>8?'Top 8 of '+data.pics.length+' PICs ranked by tasks done.':'Ranked by tasks done.'),32,466,8,'#63758b');
     band('2. Companies requiring attention',478);
     text('Company / affected services',42,508,9,'#63758b',true);text('Delayed',355,508,9);text('Share',425,508,9);text('Risk',505,508,9);
     data.risks.slice(0,6).forEach((c,i)=>{const y=535+i*32;const color=c.risk==='High'?'#ca3147':c.risk==='Medium'?'#a96700':'#346886';text(c.name,42,y,9,'#173758',true,300);text([...c.services].sort().join(', '),42,y+12,8,'#63758b',false,300);text(c.delayed+' / '+c.total,355,y,9);text(percent(c.delayed,c.total),425,y,9);text(c.risk,505,y,9,color,true);line(y+19);});
