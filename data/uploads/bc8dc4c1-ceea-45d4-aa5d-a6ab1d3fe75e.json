@@ -1,7 +1,7 @@
 {
-  "id": "fdbf4194-cfa8-4aed-b05d-a582f1d6e9a3",
+  "id": "bc8dc4c1-ceea-45d4-aa5d-a6ab1d3fe75e",
   "fileName": "KPI Status 22.10.2026.xlsx",
-  "createdAt": "2026-10-27T00:56:49.230Z",
+  "createdAt": "2026-10-28T06:42:56.022Z",
   "rows": [
     {
       "service": "Accounting",
@@ -6712,22 +6712,6 @@
       "company": "MICRO PRECISION SDN BHD",
       "pic": "YOONG SHI",
       "role": "Main",
-      "month": "2026-09",
-      "completed": 0,
-      "delay": 0,
-      "waitApproval": 0,
-      "notApplicable": 1,
-      "sourceSheet": "3. E-INV (SUMMARY)",
-      "sourceCell": "L14",
-      "invoiceType": "Self-bill",
-      "task": "Self-bill E-Invoice",
-      "assignmentId": "task:[\"E-Invoice\",\"MICRO PRECISION SDN BHD\",\"Self-bill E-Invoice\",\"Main\",\"YOONG SHI\"]"
-    },
-    {
-      "service": "E-Invoice",
-      "company": "MICRO PRECISION SDN BHD",
-      "pic": "YOONG SHI",
-      "role": "Main",
       "month": "2026-10",
       "completed": 0,
       "delay": 1,
@@ -6770,6 +6754,22 @@
       "invoiceType": "Self-bill",
       "task": "Self-bill E-Invoice",
       "assignmentId": "task:[\"E-Invoice\",\"MICRO PRECISION SDN BHD\",\"Self-bill E-Invoice\",\"Main\",\"YOONG SHI\"]"
+    },
+    {
+      "service": "E-Invoice",
+      "company": "MICRO PRECISION SDN BHD",
+      "pic": "YEOH",
+      "role": "Main",
+      "month": "2026-09",
+      "completed": 1,
+      "delay": 0,
+      "waitApproval": 0,
+      "notApplicable": 0,
+      "sourceSheet": "3. E-INV (SUMMARY)",
+      "sourceCell": "L14",
+      "invoiceType": "Self-bill",
+      "task": "Self-bill E-Invoice",
+      "assignmentId": "task:[\"E-Invoice\",\"MICRO PRECISION SDN BHD\",\"Self-bill E-Invoice\",\"Main\",\"YEOH\"]"
     },
     {
       "service": "E-Invoice",
