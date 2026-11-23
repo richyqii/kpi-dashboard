@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "currentId": "bc8dc4c1-ceea-45d4-aa5d-a6ab1d3fe75e",
+  "currentId": "486b4b23-7339-42cd-8ca0-ba3ccebe3299",
   "versions": [
     {
       "id": "0298233b-40e4-43f4-9be4-4c37e6d55841",
@@ -22,6 +22,13 @@
       "createdAt": "2026-10-26T09:57:04.775Z",
       "sha256": "d4badc9f5d44fff7dbb5217883b48ae5e23af63dc8abd37dc90a6f0a35a35ead",
       "byteLength": 11732
+    },
+    {
+      "id": "486b4b23-7339-42cd-8ca0-ba3ccebe3299",
+      "fileName": "KPI 23.11.2026.xlsx",
+      "createdAt": "2026-11-23T04:57:38.330Z",
+      "sha256": "951053970b8f92abe95a40ca5e37b5c9186af50f79755dd1d6af86046bbcaed9",
+      "byteLength": 22185
     },
     {
       "id": "bc8dc4c1-ceea-45d4-aa5d-a6ab1d3fe75e",
